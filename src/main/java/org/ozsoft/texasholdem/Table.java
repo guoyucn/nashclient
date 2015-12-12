@@ -36,6 +36,8 @@ package org.ozsoft.texasholdem;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -115,7 +117,7 @@ public class Table {
     private StringBuilder commandBuilder = new StringBuilder();
     private StringBuilder outputBuilder = new StringBuilder();
     
-    private int handNumber = 0;
+    private long handNumber = 0;
 
     private boolean allin = false;
     
@@ -167,7 +169,7 @@ public class Table {
         		players.get(dealerPosition).setCash(InputOutputMgr.INSTANCE.getMoney1());
         		players.get((dealerPosition+1)%players.size()).setCash(InputOutputMgr.INSTANCE.getMoney2());
         	}else{
-        		bigBlind = 20 + (handNumber/3)*10;
+        		bigBlind = (int) (20 + (handNumber/3)*10);
         	}
         		
             int noOfActivePlayers = 0;
@@ -210,8 +212,13 @@ public class Table {
      * Plays a single hand.
      */
     private void playHand() {
-    	handNumber++;
-        resetHand();
+    	if (InputOutputMgr.INSTANCE.getInputType() == InputOutputMgr.InputType.File){
+    		handNumber = Long.parseLong(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMddHHmmss")));
+    	} else {
+    		handNumber++;
+    	}
+        
+    	resetHand();
         //<--
         commandBuilder = new StringBuilder();
         commandBuilder.append(handNumber).append(" ").append(bigBlind);
@@ -228,13 +235,14 @@ public class Table {
         //output
         outputBuilder = new StringBuilder();
         DateFormat df = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        String inputFileTimeStamp = InputOutputMgr.INSTANCE.getInputFileTimeStamp();
         outputBuilder.append("PokerStars Hand #").append(handNumber).append(": ")
-        	.append("Tournament #1, $1 USD Hold'em No Limit - Match Round I, Level I (")
+        	.append("Tournament #").append(inputFileTimeStamp).append(", $1 USD Hold'em No Limit - Match Round I, Level I (")
         	.append(bigBlind/2).append("/").append(bigBlind).append(") - ")
-        	.append(df.format(new Date())).append("\n");
-        outputBuilder.append("Table '1' 2-max Seat #").append(dealerPosition).append(" is the button\n");
-        outputBuilder.append("Seat 0: ").append(activePlayers.get(0).getName()).append(" (").append(activePlayers.get(0).getCash()).append(" in chips)\n");
-        outputBuilder.append("Seat 1: ").append(activePlayers.get(1).getName()).append(" (").append(activePlayers.get(1).getCash()).append(" in chips)\n");
+        	.append(df.format(new Date())).append("\r\n");
+        outputBuilder.append("Table '").append(inputFileTimeStamp).append("' 2-max Seat #").append(dealerPosition+1).append(" is the button\r\n");
+        outputBuilder.append("Seat 1: ").append(activePlayers.get(0).getName()).append(" (").append(activePlayers.get(0).getCash()).append(" in chips)\r\n");
+        outputBuilder.append("Seat 2: ").append(activePlayers.get(1).getName()).append(" (").append(activePlayers.get(1).getCash()).append(" in chips)\r\n");
                 
         // Small blind.
         if (activePlayers.size() > 2) {
@@ -359,7 +367,7 @@ public class Table {
         
         //output
         outputBuilder.append(actor.getName()).append(": posts small blind ")
-        	.append(smallBlind).append("\n");
+        	.append(smallBlind).append("\r\n");
     }
     
     /**
@@ -373,7 +381,7 @@ public class Table {
 
         //output
         outputBuilder.append(actor.getName()).append(": posts big blind ")
-        	.append(bigBlind).append("\n");
+        	.append(bigBlind).append("\r\n");
     }
     
     /**
@@ -381,7 +389,7 @@ public class Table {
      */
     private void dealHoleCards() {
     	//output
-    	outputBuilder.append("*** HOLE CARDS ***\n");
+    	outputBuilder.append("*** HOLE CARDS ***\r\n");
     	    	
     	/*
     	for (Player player : activePlayers) {
@@ -396,7 +404,7 @@ public class Table {
     		outputBuilder.append("Dealt to ")
     			.append(activePlayers.get(i%activePlayers.size()).getName()).append(" [")
     			.append(Card.cardstoString(activePlayers.get(i%activePlayers.size()).getCards(), " "))
-    			.append("]\n");
+    			.append("]\r\n");
     	}
     	
         System.out.println();
@@ -423,12 +431,12 @@ public class Table {
         if (board.size() == 3){
 	        outputBuilder.append("*** ").append(phaseName.toUpperCase())
 	        	.append(" *** [").append(Card.cardstoString(board, " "))
-	        	.append("]\n");
+	        	.append("]\r\n");
         } else {
         	List<Card> cards = board.subList(0, board.size()-1);
         	outputBuilder.append("*** ").append(phaseName.toUpperCase())
         		.append(" *** [").append(Card.cardstoString(cards, " "))
-        		.append("] [").append(board.get(board.size()-1)).append("]\n");
+        		.append("] [").append(board.get(board.size()-1)).append("]\r\n");
         }
     }
     
@@ -496,7 +504,7 @@ public class Table {
                 	commandBuilder.append("k");
                     // Do nothing.
                 	//output
-                	outputBuilder.append("checks\n");
+                	outputBuilder.append("checks\r\n");
                 } else if (action == Action.CALL) {
                 	commandBuilder.append("c");
                     int betIncrement = bet - actor.getBet();
@@ -508,10 +516,10 @@ public class Table {
                     contributePot(betIncrement);
 
                 	//output
-                	outputBuilder.append("calls ").append(betIncrement).append("\n");
+                	outputBuilder.append("calls ").append(betIncrement).append("\r\n");
                 } else if (action instanceof BetAction) {
                     int amount = action.getAmount();
-                	outputBuilder.append("raises ").append(amount).append("\n");
+                	outputBuilder.append("raises ").append(amount).append("\r\n");
                     if (isHuman){
                     	amount = amount - bet;
                     }
@@ -532,10 +540,10 @@ public class Table {
                 } else if (action instanceof RaiseAction) {
                     int amount =  action.getAmount();
                     if (isHuman){
-                    	outputBuilder.append("raises ").append(amount).append("\n");
+                    	outputBuilder.append("raises ").append(amount).append("\r\n");
                     	amount = amount - bet;
                     }else{
-                    	outputBuilder.append("raises ").append(amount + bet).append("\n");
+                    	outputBuilder.append("raises ").append(amount + bet).append("\r\n");
                     }
                     if (amount < minBet && amount < actor.getCash()) {
                         //throw new IllegalStateException("Illegal client action: raise less than minimum bet!");
@@ -562,7 +570,7 @@ public class Table {
                 	//output
                 } else if (action == Action.FOLD) {
                 	//output
-                	outputBuilder.append("folds\n");
+                	outputBuilder.append("folds\r\n");
 
                 	actor.setCards(null);
                     activePlayers.remove(actor);
@@ -579,16 +587,17 @@ public class Table {
                         playersToAct = 0;
                     	//output
                         outputBuilder.append(winner.getName()).append(" collected ")
-                        	.append(amount).append(" from pot\n")
-                        	.append("*** SUMMARY ***\n")
-                        	.append("Total pot ").append(amount).append(" | Rake 0\n")
-                        	.append("Board [").append(Card.cardstoString(board, " ")).append("]\n");
+                        	.append(amount).append(" from pot\r\n")
+                        	.append("*** SUMMARY ***\r\n")
+                        	.append("Total pot ").append(amount).append(" | Rake 0\r\n")
+                        	.append("Board [").append(Card.cardstoString(board, " ")).append("]\r\n");
                         
                         for(int i = 0; i < players.size(); i++){
-                        	outputBuilder.append("Seat ").append(i).append(": ").append(players.get(i).getName())
+                        	outputBuilder.append("Seat ").append(i+1).append(": ").append(players.get(i).getName())
                         		.append(dealerPosition == i ? " (button) (small blind) " : " (big blind) ")
-                        		.append(players.get(i) == winner ? "won (" + amount + ")\n" : " mucked\n");
+                        		.append(players.get(i) == winner ? "won (" + amount + ")\r\n" : " mucked\r\n");
                         }
+                        outputBuilder.append("\r\n\r\n\r\n");
                     }
 
                     commandBuilder.append("f");
@@ -611,7 +620,7 @@ public class Table {
                     
                     playersToAct = activePlayers.size() - 1;
                     commandBuilder.append("r").append(raise);
-                	outputBuilder.append("raises ").append(amount).append("\n");
+                	outputBuilder.append("raises ").append(amount).append("\r\n");
                 }
                 else {
                     // Programming error, should never happen.
@@ -868,16 +877,17 @@ public class Table {
 
         	//output
             outputBuilder.append(winner.getName()).append(" collected ")
-            	.append(potShare).append(" from pot\n")
-            	.append("*** SUMMARY ***\n")
-            	.append("Total pot ").append(totalWon).append(" | Rake 0\n")
-            	.append("Board [").append(Card.cardstoString(board, " ")).append("]\n");
+            	.append(potShare).append(" from pot\r\n")
+            	.append("*** SUMMARY ***\r\n")
+            	.append("Total pot ").append(totalWon).append(" | Rake 0\r\n")
+            	.append("Board [").append(Card.cardstoString(board, " ")).append("]\r\n");
             
             for(int i = 0; i < players.size(); i++){
-            	outputBuilder.append("Seat ").append(i).append(": ").append(players.get(i).getName())
+            	outputBuilder.append("Seat ").append(i+1).append(": ").append(players.get(i).getName())
             		.append(dealerPosition == i ? " (button) (small blind) " : " (big blind) ")
-            		.append(players.get(i) == winner ? "won (" + potShare + ")\n" : " mucked\n");
-            }            
+            		.append(players.get(i) == winner ? "won (" + potShare + ")\r\n" : " mucked\r\n");
+            } 
+            outputBuilder.append("\r\n\r\n\r\n");
         }
         winnerText.append('.');
         notifyMessage(winnerText.toString());
@@ -1022,11 +1032,11 @@ public class Table {
 		this.raises = raises;
 	}
 
-	public int getHandNumber() {
+	public long getHandNumber() {
 		return handNumber;
 	}
 
-	public void setHandNumber(int handNumber) {
+	public void setHandNumber(long handNumber) {
 		this.handNumber = handNumber;
 	}
 

@@ -1,0 +1,1 @@
+java -cp poker-0.7.jar org.ozsoft.texasholdem.gui.Main File
