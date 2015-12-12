@@ -13,6 +13,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.nio.file.Files;
+import static java.nio.file.StandardCopyOption.*;
 
 import org.ozsoft.texasholdem.Deck;
 
@@ -26,14 +28,18 @@ public enum InputOutputMgr {
 
 	private static final String inputFolderStr = "Input";
 	private static final String outputFolderStr = "Output";
+	private static final String backupFolderStr = "bak";
+	private static final String progressRecordStr = "Progress.Record";
 	private File inputFolder;
 	private File outputFolder;
+	private File backupFolder;
 	private File outputFile;
+	private File progressRecordFile;
 	private ArrayList<File> inputFiles = new ArrayList<>();
 	private int inputFileIndex = -1;
 	private ArrayList<String> inputRows = new ArrayList<>();
 	private int inputRowIndex = 0;
-	
+	private boolean loadProgress = false;
 	private int dealerPosition;
 	private int smallBlind;
 	private int bigBlind;
@@ -45,6 +51,8 @@ public enum InputOutputMgr {
 	{
 		inputFolder = createFolder(inputFolderStr);
 		outputFolder = createFolder(outputFolderStr);
+		backupFolder = createFolder(inputFolderStr + "/" + backupFolderStr);
+		progressRecordFile = new File(inputFolder, progressRecordStr);
 		
 		// create new filename filter
         FilenameFilter fileNameFilter = new FilenameFilter() {
@@ -74,6 +82,8 @@ public enum InputOutputMgr {
 	        	inputFiles.add(file);
 	        }
 	    }
+	    
+	    readProgress();
 	}
 
 	public InputType getInputType() {
@@ -127,8 +137,16 @@ public enum InputOutputMgr {
 		inputRowIndex++;
 		
 		if (inputRows.size() < inputRowIndex + 1){
+			//Current input file is done, backup it!
+			backupCurrentInputFile();
+			
 			//Reset
-			inputRowIndex = 0;
+			if (loadProgress){
+				inputRowIndex--;
+				loadProgress = false;
+			} else {
+				inputRowIndex = 0;
+			}
 			inputRows.clear();
 			
 			inputFileIndex++;
@@ -157,14 +175,35 @@ public enum InputOutputMgr {
 			return;
 		
 		try {
+			//Log result
 			try (Writer writer = new BufferedWriter(new OutputStreamWriter(
 			        new FileOutputStream(outputFile, true), "UTF-8"))) {
 				writer.write(msg);
+			}
+			
+			//Record progress
+			try (Writer writer = new BufferedWriter(new OutputStreamWriter(
+			        new FileOutputStream(progressRecordFile, false), "UTF-8"))) {
+				writer.write(inputFiles.get(inputFileIndex).getName() + " : " + inputRowIndex);
 			}
 		} catch(Exception e)
 		{
 			throw new RuntimeException(e);
 		}
+	}
+	
+	public String getInputFileTimeStamp()
+	{
+		String res;
+		try {
+			String fileName = inputFiles.get(inputFileIndex).getName();
+			res = fileName.substring(fileName.lastIndexOf(".")-12, fileName.lastIndexOf("."));
+		} catch (Exception e) {
+			System.out.println("Exception in getInputFileTimeStamp() : " + e.getMessage());
+			res = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMddHHmmss"));
+		}
+		
+		return res;
 	}
 	
 	private void parseData(String[] data)
@@ -200,6 +239,43 @@ public enum InputOutputMgr {
 		catch (Exception e)
 		{
 			throw new RuntimeException(e);
+		}
+	}
+	
+	private void backupCurrentInputFile()
+	{
+		if (inputFileIndex < 0 || inputFileIndex > inputFiles.size()-1)
+			return;
+		
+		try {
+			Files.move(inputFiles.get(inputFileIndex).toPath(),
+				backupFolder.toPath().resolve(inputFiles.get(inputFileIndex).getName()), REPLACE_EXISTING);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	private void readProgress()
+	{
+		if (progressRecordFile.exists() && progressRecordFile.isFile()){
+			String line;
+			try {
+				try(BufferedReader br = new BufferedReader(new FileReader(progressRecordFile))) {
+				    line = br.readLine();
+				}
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+			
+			String[] strs = line.split(":");
+			String fileName = strs[0].trim();
+			int index = Integer.parseInt(strs[1].trim());
+			
+			if(inputFiles.get(0).getName().equals(fileName)){
+				//Yes, we need to load progress from the saved progress file.
+				loadProgress = true;
+				inputRowIndex = index;
+			}
 		}
 	}
 	
