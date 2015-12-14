@@ -519,7 +519,7 @@ public class Table {
                 	outputBuilder.append("calls ").append(betIncrement).append("\r\n");
                 } else if (action instanceof BetAction) {
                     int amount = action.getAmount();
-                	outputBuilder.append("raises ").append(amount).append("\r\n");
+                	outputBuilder.append("bets ").append(amount).append("\r\n");
                     if (isHuman){
                     	amount = amount - bet;
                     }
@@ -540,10 +540,10 @@ public class Table {
                 } else if (action instanceof RaiseAction) {
                     int amount =  action.getAmount();
                     if (isHuman){
-                    	outputBuilder.append("raises ").append(amount).append("\r\n");
+                    	//outputBuilder.append("raises ").append(amount).append("\r\n");
                     	amount = amount - bet;
                     }else{
-                    	outputBuilder.append("raises ").append(amount + bet).append("\r\n");
+                    	//outputBuilder.append("raises ").append(amount + bet).append("\r\n");
                     }
                     if (amount < minBet && amount < actor.getCash()) {
                         //throw new IllegalStateException("Illegal client action: raise less than minimum bet!");
@@ -567,6 +567,7 @@ public class Table {
                         playersToAct = activePlayers.size() - 1;
                     }
                     commandBuilder.append("r").append(amount);
+                    outputBuilder.append("raises ").append(amount).append(" to ").append(actor.getBet()).append("\r\n");
                 	//output
                 } else if (action == Action.FOLD) {
                 	//output
@@ -620,7 +621,8 @@ public class Table {
                     
                     playersToAct = activePlayers.size() - 1;
                     commandBuilder.append("r").append(raise);
-                	outputBuilder.append("raises ").append(amount).append("\r\n");
+                	//outputBuilder.append("raises ").append(amount).append("\r\n");
+                	outputBuilder.append("raises ").append(raise).append(" to ").append(actor.getBet()).append("\r\n");
                 }
                 else {
                     // Programming error, should never happen.
