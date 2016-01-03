@@ -35,9 +35,9 @@ public enum InputOutputMgr {
 	private File backupFolder;
 	private File outputFile;
 	private File progressRecordFile;
-	private ArrayList<File> inputFiles = new ArrayList<>();
+	private ArrayList<File> inputFiles = new ArrayList<File>();
 	private int inputFileIndex = -1;
-	private ArrayList<String> inputRows = new ArrayList<>();
+	private ArrayList<String> inputRows = new ArrayList<String>();
 	private int inputRowIndex = 0;
 	private boolean loadProgress = false;
 	private int dealerPosition;
