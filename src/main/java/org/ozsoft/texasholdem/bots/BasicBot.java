@@ -158,7 +158,7 @@ public class BasicBot extends Bot {
 	    	String action = response.substring(index+7);
 	    	action = action.split("\\r?\\n")[0];
 	    	System.out.println("output: " + response);
-	    	System.out.println("input: " + command);
+//	    	System.out.println("input: " + command);
 	    	System.out.println("action: " + action);
 	    	if ("c".equals(action)){
 	    		return Action.CALL;

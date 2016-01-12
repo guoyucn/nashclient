@@ -446,6 +446,7 @@ public class Table {
     private void doBettingRound(boolean isPreFlop) {
         // Determine the number of active players.
         int playersToAct = activePlayers.size();
+        minBet = bigBlind;
         // Determine the initial player and bet size.
         if (board.size() == 0) {
             // Pre-Flop; player left of big blind starts, bet is the big blind.
@@ -471,9 +472,9 @@ public class Table {
             boolean isHuman;
             Action action = null;
 
-            if (allin) {
+            if (actor.isAllIn()) {
                 // Player is all-in, so must check.
-                action = Action.CHECK;
+                //action = Action.CHECK;
                 playersToAct--;
             } else {
                 // Otherwise allow client to act.
@@ -520,9 +521,9 @@ public class Table {
                 } else if (action instanceof BetAction) {
                     int amount = action.getAmount();
                 	outputBuilder.append("bets ").append(amount).append("\r\n");
-                    if (isHuman){
-                    	amount = amount - bet;
-                    }
+                    //if (isHuman){
+                    //	amount = amount - bet;
+                    //}
                     if (amount < minBet && amount < actor.getCash()) {
                         //throw new IllegalStateException("Illegal client action: bet less than minimum bet!");
                     }
@@ -531,7 +532,7 @@ public class Table {
                     actor.payCash(amount);
                     contributePot(amount);
                     bet = amount;
-                    //minBet = amount;
+                    minBet = amount;
                     lastBettor = actor;
                     playersToAct = activePlayers.size() - 1;
                     
@@ -539,16 +540,18 @@ public class Table {
                 	//output
                 } else if (action instanceof RaiseAction) {
                     int amount =  action.getAmount();
+                    /*
                     if (isHuman){
                     	//outputBuilder.append("raises ").append(amount).append("\r\n");
                     	amount = amount - bet;
                     }else{
                     	//outputBuilder.append("raises ").append(amount + bet).append("\r\n");
                     }
+                    */
                     if (amount < minBet && amount < actor.getCash()) {
                         //throw new IllegalStateException("Illegal client action: raise less than minimum bet!");
                     }
-                    //minBet = amount;
+                    minBet = amount;
                     int betIncrement = bet - actor.getBet() + amount;
                     if (betIncrement > actor.getCash()) {
                         betIncrement = actor.getCash();
@@ -608,7 +611,7 @@ public class Table {
                 	
                 	
                 	bet = actor.getBet() + amount;
-                    //minBet = amount;
+                    minBet = amount;
                     int betIncrement = bet - actor.getBet();
                     if (betIncrement > actor.getCash()) {
                         betIncrement = actor.getCash();

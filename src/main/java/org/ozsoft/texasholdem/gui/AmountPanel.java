@@ -152,7 +152,7 @@ public class AmountPanel extends JPanel implements ChangeListener, ActionListene
      * 
      * @return The selected action.
      */
-    public Action show(Action defaultAction, int minBet, int maxBet) {
+    public Action show(Action defaultAction, int minBet, int maxBet, int increment) {
         this.defaultAction = defaultAction;
         betRaiseButton.setText(defaultAction.getName());
         selectedAction = null;
@@ -169,7 +169,8 @@ public class AmountPanel extends JPanel implements ChangeListener, ActionListene
         while (value < maxBet){
         	sliderAmounts.put(noOfValues, value);
         	noOfValues++;
-        	value += table.getBigBlind()/2;
+        	//value += table.getBigBlind()/2;
+        	value += increment;
         }
         sliderAmounts.put(noOfValues, maxBet);
         amountSlider.setMinimum(0);
