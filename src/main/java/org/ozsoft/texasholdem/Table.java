@@ -467,7 +467,12 @@ public class Table {
         lastBettor = null;
         raises = 0;
         notifyBoardUpdated();
-        while (playersToAct > 0) {
+
+        //If already all in, just do nothing
+    	if (allin)
+    		return;
+
+    	while (playersToAct > 0) {
             rotateActor();
             boolean isHuman;
             Action action = null;

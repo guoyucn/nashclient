@@ -207,12 +207,16 @@ public class ControlPanel extends JPanel implements ActionListener {
                         repaint();
                     }
                 });
+
+                if (selectedAction == Action.BET) {
+                	selectedAction = amountPanel.show(selectedAction, minBet, cash, minBet);
+                } else if (selectedAction == Action.RAISE) {
+                	selectedAction = amountPanel.show(selectedAction, table.getBet() + minBet, table.getActor().getBet() + cash, minBet);
+                }
                 
                 if (selectedAction == Action.BET) {
-               		selectedAction = amountPanel.show(selectedAction, minBet, cash, minBet);
                     selectedAction = new BetAction(amountPanel.getAmount());
                 } else if (selectedAction == Action.RAISE) {
-                	selectedAction = amountPanel.show(selectedAction, table.getBet() + minBet, cash, minBet);
                     selectedAction = new RaiseAction(amountPanel.getAmount() - table.getBet());
                 } else {
                     // User cancelled.
