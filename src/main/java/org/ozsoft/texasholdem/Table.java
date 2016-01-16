@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.Iterator;
 
 import org.ozsoft.texasholdem.actions.Action;
 import org.ozsoft.texasholdem.actions.BetAction;
@@ -474,7 +475,7 @@ public class Table {
 
     	while (playersToAct > 0) {
             rotateActor();
-            boolean isHuman;
+            //boolean isHuman;
             Action action = null;
 
             if (actor.isAllIn()) {
@@ -496,10 +497,10 @@ public class Table {
                 playersToAct--;
                 
                 if (actor == players.get(0)){
-                	isHuman = true;
+                	//isHuman = true;
                 	commandBuilder.append(" ").append("V.");
                 }else{
-                	isHuman = false;
+                	//isHuman = false;
                 	commandBuilder.append(" ").append("H.");
                 }
                 	
@@ -513,16 +514,24 @@ public class Table {
                 	outputBuilder.append("checks\r\n");
                 } else if (action == Action.CALL) {
                 	commandBuilder.append("c");
+                	Boolean partialCall = false;
                     int betIncrement = bet - actor.getBet();
                     if (betIncrement > actor.getCash()) {
                         betIncrement = actor.getCash();
+                        partialCall = true;
                     }
                     actor.payCash(betIncrement);
                     actor.setBet(actor.getBet() + betIncrement);
                     contributePot(betIncrement);
 
                 	//output
-                	outputBuilder.append("calls ").append(betIncrement).append("\r\n");
+                	outputBuilder.append("calls ").append(betIncrement)
+                	.append(partialCall ? " and is all-in" : "").append("\r\n");
+                	
+                	if (partialCall){
+                		uncallBet();
+                	}
+                		
                 } else if (action instanceof BetAction) {
                     int amount = action.getAmount();
                 	outputBuilder.append("bets ").append(amount).append("\r\n");
@@ -666,7 +675,7 @@ public class Table {
     private Set<Action> getAllowedActions(Player player) {
         Set<Action> actions = new HashSet<Action>();
         if (player.isAllIn()) {
-            actions.add(Action.CHECK);
+            //actions.add(Action.CHECK);
         } else {
             int actorBet = actor.getBet();
             if (bet == 0) {
@@ -677,7 +686,8 @@ public class Table {
             } else {
                 if (actorBet < bet) {
                     actions.add(Action.CALL);
-                    if (tableType == TableType.NO_LIMIT || raises < MAX_RAISES || activePlayers.size() == 2) {
+                    if ((tableType == TableType.NO_LIMIT || raises < MAX_RAISES || activePlayers.size() == 2)
+                    	&& actorBet + actor.getCash() > bet) {
                         actions.add(Action.RAISE);
                     }
                 } else {
@@ -906,6 +916,32 @@ public class Table {
         if (totalWon != totalPot) {
             throw new IllegalStateException("Incorrect pot division!");
         }
+    }
+    
+    //Uncall bet in case of partial call  
+    private void uncallBet() {
+    	int total = 0;
+    	Player p = null;
+    	for (Iterator<Pot> iterator = pots.iterator(); iterator.hasNext();) {
+    	    Pot pot = iterator.next();
+            if (pot.getContributors().size() == 1) {
+            	p = pot.getContributors().iterator().next();
+            	int amount = pot.getBet();
+            	total += amount;
+            	
+            	//Player needs to get this amount back from this pot
+                p.setCash(p.getCash() + amount);
+                p.setBet(p.getBet() - amount);
+
+                //Update table info
+                bet -= amount;
+                iterator.remove();
+            }
+    	}
+    	
+    	//Output
+    	outputBuilder.append("Uncalled bet (").append(total)
+    	.append(") returned to ").append(p.getName()).append("\r\n");
     }
     
     /**
