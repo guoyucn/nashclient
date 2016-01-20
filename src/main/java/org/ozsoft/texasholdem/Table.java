@@ -514,7 +514,7 @@ public class Table {
                 	outputBuilder.append("checks\r\n");
                 } else if (action == Action.CALL) {
                 	commandBuilder.append("c");
-                	Boolean partialCall = false;
+                	boolean partialCall = false;
                     int betIncrement = bet - actor.getBet();
                     if (betIncrement > actor.getCash()) {
                         betIncrement = actor.getCash();
@@ -584,8 +584,13 @@ public class Table {
                         playersToAct = activePlayers.size() - 1;
                     }
                     commandBuilder.append("r").append(amount);
-                    outputBuilder.append("raises ").append(amount).append(" to ").append(actor.getBet()).append("\r\n");
                 	//output
+                    outputBuilder.append("raises ").append(amount).append(" to ").append(actor.getBet()).append("\r\n");
+                    
+                    //If another player already allin
+                    if (allin){
+                    	uncallBet();
+                    }
                 } else if (action == Action.FOLD) {
                 	//output
                 	outputBuilder.append("folds\r\n");
@@ -640,6 +645,11 @@ public class Table {
                     commandBuilder.append("r").append(raise);
                 	//outputBuilder.append("raises ").append(amount).append("\r\n");
                 	outputBuilder.append("raises ").append(raise).append(" to ").append(actor.getBet()).append("\r\n");
+                	
+                	//If another player already allin
+                    if (allin){
+                    	uncallBet();
+                    }
                 }
                 else {
                     // Programming error, should never happen.
@@ -882,6 +892,14 @@ public class Table {
             }
         }
         
+        //output
+        outputBuilder.append("*** SHOW DOWN ***\r\n");
+        for(int i = dealerPosition; i < players.size() + dealerPosition; i++) {
+    		outputBuilder.append(players.get(i%players.size()).getName()).append(": shows [")
+    			.append(Card.cardstoString(players.get(i%players.size()).getCards(), " "))
+    			.append("]\r\n");
+    	}
+        
         // Divide winnings.
         StringBuilder winnerText = new StringBuilder();
         int totalWon = 0;
@@ -897,17 +915,7 @@ public class Table {
 
         	//output
             outputBuilder.append(winner.getName()).append(" collected ")
-            	.append(potShare).append(" from pot\r\n")
-            	.append("*** SUMMARY ***\r\n")
-            	.append("Total pot ").append(totalWon).append(" | Rake 0\r\n")
-            	.append("Board [").append(Card.cardstoString(board, " ")).append("]\r\n");
-            
-            for(int i = 0; i < players.size(); i++){
-            	outputBuilder.append("Seat ").append(i+1).append(": ").append(players.get(i).getName())
-            		.append(dealerPosition == i ? " (button) (small blind) " : " (big blind) ")
-            		.append(players.get(i) == winner ? "won (" + potShare + ")\r\n" : " mucked\r\n");
-            } 
-            outputBuilder.append("\r\n\r\n\r\n");
+            	.append(potShare).append(" from pot\r\n");
         }
         winnerText.append('.');
         notifyMessage(winnerText.toString());
@@ -916,6 +924,32 @@ public class Table {
         if (totalWon != totalPot) {
             throw new IllegalStateException("Incorrect pot division!");
         }
+        
+        //output
+        outputBuilder.append("*** SUMMARY ***\r\n")
+    	.append("Total pot ").append(totalWon).append(" | Rake 0\r\n")
+    	.append("Board [").append(Card.cardstoString(board, " ")).append("]\r\n");
+    
+        if (potDivision.keySet().size() == 1){
+        	Player winner = potDivision.keySet().iterator().next();
+        	int potShare = potDivision.get(winner);
+	        for(int i = 0; i < players.size(); i++){
+	        	outputBuilder.append("Seat ").append(i+1).append(": ").append(players.get(i).getName())
+	    			.append(dealerPosition == i ? " (button) (small blind) " : " (big blind) ")
+	    			.append(players.get(i) == winner ? "won (" + potShare + ")\r\n" : " mucked\r\n");
+	        }
+        }
+        else {
+	        for(int i = 0; i < players.size(); i++){
+	        	int potShare = potDivision.get(players.get(i));
+	        	outputBuilder.append("Seat ").append(i+1).append(": ").append(players.get(i).getName())
+	    			.append(dealerPosition == i ? " (button) (small blind) " : " (big blind) ")
+	    			.append("won (" + potShare + ")\r\n");
+	        }
+        }
+        	
+        outputBuilder.append("\r\n\r\n\r\n");
+
     }
     
     //Uncall bet in case of partial call  
