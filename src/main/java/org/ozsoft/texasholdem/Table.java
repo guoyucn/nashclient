@@ -974,8 +974,10 @@ public class Table {
     	}
     	
     	//Output
-    	outputBuilder.append("Uncalled bet (").append(total)
-    	.append(") returned to ").append(p.getName()).append("\r\n");
+    	if (p != null) {
+	    	outputBuilder.append("Uncalled bet (").append(total)
+	    	.append(") returned to ").append(p.getName()).append("\r\n");
+    	}
     }
     
     /**
