@@ -81,9 +81,7 @@ public enum InputOutputMgr {
 	        if (!file.isDirectory()) {
 	        	inputFiles.add(file);
 	        }
-	    }
-	    
-	    readProgress();
+	    }    
 	}
 
 	public InputType getInputType() {
@@ -92,6 +90,9 @@ public enum InputOutputMgr {
 
 	public void setInputType(InputType inputType) {
 		this.inputType = inputType;
+		
+		if (inputType == InputType.File)
+			readProgress();
 	}
 
 	public int getDealerPosition() {
