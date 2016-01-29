@@ -59,6 +59,9 @@ public class ControlPanel extends JPanel implements ActionListener {
     /** The Raise button. */
     private final JButton raiseButton;
     
+    /** The Allin button. */
+    private final JButton allinButton;
+
     /** The Fold button. */
     private final JButton foldButton;
     
@@ -100,6 +103,8 @@ public class ControlPanel extends JPanel implements ActionListener {
                     selectedAction = Action.BET;
                 } else if ("r".equals(cmd)) {
                     selectedAction = Action.RAISE;
+                } else if ("a".equals(cmd)) {
+                    selectedAction = Action.ALL_IN;
                 } else if ("f".equals(cmd)){
                     selectedAction = Action.FOLD;
                 }else{
@@ -118,6 +123,7 @@ public class ControlPanel extends JPanel implements ActionListener {
         callButton = createActionButton(Action.CALL, "C");
         betButton = createActionButton(Action.BET, "B");
         raiseButton = createActionButton(Action.RAISE, "R");
+        allinButton = createActionButton(Action.ALL_IN, "A");
         foldButton = createActionButton(Action.FOLD, "F");
         amountPanel = new AmountPanel(table);
     }
@@ -177,6 +183,9 @@ public class ControlPanel extends JPanel implements ActionListener {
                         }
                         if (allowedActions.contains(Action.RAISE)) {
                             add(raiseButton);
+                        }
+                        if (allowedActions.contains(Action.ALL_IN)) {
+                            add(allinButton);
                         }
                         if (allowedActions.contains(Action.FOLD)) {
                             add(foldButton);
@@ -245,6 +254,8 @@ public class ControlPanel extends JPanel implements ActionListener {
             selectedAction = Action.BET;
         } else if (source == raiseButton) {
             selectedAction = Action.RAISE;
+        } else if (source == allinButton) {
+            selectedAction = Action.ALL_IN;
         } else {
             selectedAction = Action.FOLD;
         }

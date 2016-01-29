@@ -692,6 +692,7 @@ public class Table {
                 actions.add(Action.CHECK);
                 if (tableType == TableType.NO_LIMIT || raises < MAX_RAISES || activePlayers.size() == 2) {
                     actions.add(Action.BET);
+                    actions.add(Action.ALL_IN);
                 }
             } else {
                 if (actorBet < bet) {
@@ -699,11 +700,13 @@ public class Table {
                     if ((tableType == TableType.NO_LIMIT || raises < MAX_RAISES || activePlayers.size() == 2)
                     	&& actorBet + actor.getCash() > bet) {
                         actions.add(Action.RAISE);
+                        actions.add(Action.ALL_IN);
                     }
                 } else {
                     actions.add(Action.CHECK);
                     if (tableType == TableType.NO_LIMIT || raises < MAX_RAISES || activePlayers.size() == 2) {
                         actions.add(Action.RAISE);
+                        actions.add(Action.ALL_IN);
                     }
                 }
             }
