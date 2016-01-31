@@ -83,7 +83,7 @@ public class BasicBot extends Bot {
     public BasicBot(int tightness, int aggression) {
     	URL wsdlLocation;
 		try {
-			wsdlLocation = new URL("http://nashserver.cloudapp.net/Service1.svc?wsdl");
+			wsdlLocation = new URL("http://123.56.189.157/Service1.svc?wsdl");
 			Service1 s = new Service1(wsdlLocation);
 	    	pokerService = s.getPort(IPokerService.class);
 		} catch (MalformedURLException e) {
