@@ -184,7 +184,9 @@ public class Table {
                 //Log result
             	if (InputOutputMgr.INSTANCE.getInputType() == InputOutputMgr.InputType.File){
             		InputOutputMgr.INSTANCE.logResult(outputBuilder.toString());
-            	}                
+            	}          	
+            	//Show result in command line.
+            	System.out.print(outputBuilder.toString());
             } else {
             	if (InputOutputMgr.INSTANCE.getInputType() != InputOutputMgr.InputType.File){
 	            	//reset player.

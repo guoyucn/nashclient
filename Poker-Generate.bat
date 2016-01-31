@@ -1,1 +1,1 @@
-java -cp poker-0.7.jar org.ozsoft.texasholdem.util.InputOutputMgr 10 100
+java -cp poker-2.0.jar org.ozsoft.texasholdem.util.InputOutputMgr 10 100
