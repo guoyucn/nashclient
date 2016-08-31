@@ -6,8 +6,10 @@ package org.ozsoft.texasholdem.util;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.time.LocalDateTime;
@@ -62,7 +64,7 @@ public class ChineseToPsLog {
 	private static Pattern pLoserBeforeFlop = Pattern.compile("第(?<seat>\\d+)号座位：玩家(?<name>\\S+) (\\((?<role>\\S+)\\))*.*败北.*");
 	private static Pattern pWinner = Pattern.compile("第(?<seat>\\d+)号座位：玩家(?<name>\\S+) (\\((?<role>\\S+)\\))*.*【(?<cards>.+)】.*胜出 \\(((?<yi>\\d+)亿)?(?<wan>\\d+)万(?<one>\\d*)\\).*");
 	private static Pattern pWinnerBeforeFlop = Pattern.compile("第(?<seat>\\d+)号座位：玩家(?<name>\\S+) (\\((?<role>\\S+)\\))*.*胜出 \\(((?<yi>\\d+)亿)?(?<wan>\\d+)万(?<one>\\d*)\\).*");
-	public static String process(List<String> psLogs) throws Exception{
+	public static String process(List<String> psLogs, boolean debug) throws Exception{
 		StringBuilder output = new StringBuilder();
 		Matcher matcher;
 		String tableNo = "";
@@ -363,7 +365,8 @@ public class ChineseToPsLog {
 			}
 			*/
 			
-			output.append("------Unhandled------>>" + psLog + "\r\n");
+			if (debug)
+				output.append("------Unhandled------>>" + psLog + "\r\n");
 		}
 		return output.toString();
 	}
@@ -373,12 +376,22 @@ public class ChineseToPsLog {
 	 */
 	public static void main(String[] args) {
 		File inputFile;
+		boolean debug = false; 
 		List<String> psLogs = new ArrayList<String>();
 		
-		if (!(args == null || args.length != 1)) {
+		if (!(args == null || args.length < 1 || args.length > 2)) {
 			try {
-				inputFile = new File(args[0]);
-				try(BufferedReader br = new BufferedReader(new FileReader(inputFile))) {
+				if (args.length == 1){
+					inputFile = new File(args[0]);					
+				} else {
+					if (!"/d".equalsIgnoreCase(args[0])){
+						throw new Exception("Wrong option - " + args[0]);
+					}
+					debug = true;
+					inputFile = new File(args[1]);
+				}
+				
+				try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(inputFile), "utf-8"))) {
 				    for(String line; (line = br.readLine()) != null; ) {
 				    	psLogs.add(line);
 				    }
@@ -389,7 +402,7 @@ public class ChineseToPsLog {
 				String outputFileStr = String.format("%s_%s.txt",
 						inputFileStr.substring(0, inputFileStr.lastIndexOf(".")), time);
 				try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFileStr), "utf-8"))) {
-					writer.write(ChineseToPsLog.process(psLogs));
+					writer.write(ChineseToPsLog.process(psLogs, debug));
 				}
 
 			} catch (Exception e) {
@@ -402,7 +415,9 @@ public class ChineseToPsLog {
 
 	private static void logError(Exception e) {
 		System.out.println("*****************************************");
-		System.out.println("Usage : ChineseToPsLog InputFile");
+		System.out.println("Usage (normal): ChineseToPsLog InputFile");
+		System.out.println("-OR-");
+		System.out.println("(debug mode): ChineseToPsLog /d InputFile");
 		System.out.println("*****************************************");
 		e.printStackTrace();
 	}

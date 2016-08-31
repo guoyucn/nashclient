@@ -1,0 +1,1 @@
+java -cp poker-2.01.jar org.ozsoft.texasholdem.util.ChineseToPsLog %1 %2
