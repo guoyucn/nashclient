@@ -8,7 +8,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -18,6 +17,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import net.sourceforge.pinyin4j.PinyinHelper;
+import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
+import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
+import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
+import net.sourceforge.pinyin4j.format.HanyuPinyinVCharType;
+import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
+
 import java.math.BigDecimal;
 
 /**
@@ -64,6 +71,15 @@ public class ChineseToPsLog {
 	private static Pattern pLoserBeforeFlop = Pattern.compile("第(?<seat>\\d+)号座位：玩家(?<name>\\S+) (\\((?<role>\\S+)\\))*.*败北.*");
 	private static Pattern pWinner = Pattern.compile("第(?<seat>\\d+)号座位：玩家(?<name>\\S+) (\\((?<role>\\S+)\\))*.*【(?<cards>.+)】.*胜出 \\(((?<yi>\\d+)亿)?(?<wan>\\d+)万(?<one>\\d*)\\).*");
 	private static Pattern pWinnerBeforeFlop = Pattern.compile("第(?<seat>\\d+)号座位：玩家(?<name>\\S+) (\\((?<role>\\S+)\\))*.*胜出 \\(((?<yi>\\d+)亿)?(?<wan>\\d+)万(?<one>\\d*)\\).*");
+	
+	private static HanyuPinyinOutputFormat defaultFormat = new HanyuPinyinOutputFormat();
+	
+	static {
+		defaultFormat.setCaseType(HanyuPinyinCaseType.LOWERCASE);
+	    defaultFormat.setToneType(HanyuPinyinToneType.WITH_TONE_NUMBER);
+	    defaultFormat.setVCharType(HanyuPinyinVCharType.WITH_V);
+	}
+	
 	public static String process(List<String> psLogs, boolean debug) throws Exception{
 		StringBuilder output = new StringBuilder();
 		Matcher matcher;
@@ -95,7 +111,7 @@ public class ChineseToPsLog {
 			
 			matcher = pHandBB.matcher(psLog);
 			if (matcher.matches()){
-				tableNo = matcher.group("table");
+				tableNo = Chn2PinYin(matcher.group("table"));
 				handNo = matcher.group("hand");
 				sb = matcher.group("sb");
 				bb = matcher.group("bb");
@@ -136,7 +152,7 @@ public class ChineseToPsLog {
 			matcher = pSeatPlayer.matcher(psLog);
 			if (matcher.matches()){
 				int seatNo = Integer.parseInt(matcher.group("seat"));
-				String name = matcher.group("name");
+				String name = Chn2PinYin(matcher.group("name"));
 				names[seatNo] = name;
 				output.append("Seat ").append(seatNo).append(": " + name + " ($" + getMoneyString(matcher)
 				+ " in chips)\r\n"); 
@@ -145,7 +161,7 @@ public class ChineseToPsLog {
 			
 			matcher = pSmallBlind.matcher(psLog);
 			if (matcher.matches()){
-				output.append(matcher.group("name")).append(": posts small blind $")
+				output.append(Chn2PinYin(matcher.group("name"))).append(": posts small blind $")
 				.append(matcher.group("sb")).append("\r\n"); 
 				continue;
 			}
@@ -153,7 +169,7 @@ public class ChineseToPsLog {
 			matcher = pBigBlind.matcher(psLog);
 			if (matcher.matches()){
 				bet = matcher.group("bb");
-				output.append(matcher.group("name") + ": posts big blind $" + bet + "\r\n");
+				output.append(Chn2PinYin(matcher.group("name")) + ": posts big blind $" + bet + "\r\n");
 				for (int i = 0; i < 10; i++){
 					if (names[i] != null){
 						output.append(names[i] + ": posts the ante $" + ante + "\r\n");
@@ -166,13 +182,13 @@ public class ChineseToPsLog {
 			matcher = pHoleCards.matcher(psLog);
 			if (matcher.matches()){
 				String holeCards = matcher.group("hole").replace("10", "T");
-				output.append("Dealt to " + matcher.group("name") + " [" + holeCards + "]\r\n"); 
+				output.append("Dealt to " + Chn2PinYin(matcher.group("name")) + " [" + holeCards + "]\r\n"); 
 				continue;
 			}
 			
 			matcher = pRaise.matcher(psLog);
 			if (matcher.matches()){
-				String name = matcher.group("name");
+				String name = Chn2PinYin(matcher.group("name"));
 				String newBet = getMoneyString(matcher);
 				BigDecimal dNewBet = new BigDecimal(newBet);
 				BigDecimal dBet = new BigDecimal(bet);
@@ -192,7 +208,7 @@ public class ChineseToPsLog {
 			
 			matcher = pCall.matcher(psLog);
 			if (matcher.matches()){
-				String name = matcher.group("name");
+				String name = Chn2PinYin(matcher.group("name"));
 				bet = getMoneyString(matcher);
 
 				String allin = matcher.group("allin");
@@ -206,7 +222,7 @@ public class ChineseToPsLog {
 			
 			matcher = pCheck.matcher(psLog);
 			if (matcher.matches()){
-				String name = matcher.group("name");
+				String name = Chn2PinYin(matcher.group("name"));
 				output.append(name + ": checks\r\n");
 				continue;
 			}
@@ -228,7 +244,7 @@ public class ChineseToPsLog {
 			
 			matcher = pFold.matcher(psLog);
 			if (matcher.matches()){
-				output.append(matcher.group("name") + ": folds\r\n");
+				output.append(Chn2PinYin(matcher.group("name")) + ": folds\r\n");
 				continue;
 			}
 			
@@ -256,14 +272,14 @@ public class ChineseToPsLog {
 			matcher = pUncalledBet.matcher(psLog);
 			if (matcher.matches()){
 				String money = getMoneyString(matcher);
-				String name = matcher.group("name");
+				String name = Chn2PinYin(matcher.group("name"));
 				output.append("Uncalled bet ($" + money + ") returned to " + name + "\r\n");
 				continue;
 			}
 			
 			matcher = pWinFromPot.matcher(psLog);
 			if (matcher.matches()){
-				String name = matcher.group("name");
+				String name = Chn2PinYin(matcher.group("name"));
 				String money = getMoneyString(matcher);
 				
 				//We have to use a placeholder for uncalledBet
@@ -316,7 +332,7 @@ public class ChineseToPsLog {
 			matcher = pLoser.matcher(psLog);
 			if (matcher.matches()){
 				String seatNo = matcher.group("seat");
-				String name = matcher.group("name");
+				String name = Chn2PinYin(matcher.group("name"));
 				String role = Chn2Eng(matcher.group("role"));
 				String cards = matcher.group("cards").replace("10", "T");
 				output.append("Seat " + seatNo + ": " + name + role
@@ -326,7 +342,7 @@ public class ChineseToPsLog {
 				matcher = pLoserBeforeFlop.matcher(psLog);
 				if (matcher.matches()){
 					String seatNo = matcher.group("seat");
-					String name = matcher.group("name");
+					String name = Chn2PinYin(matcher.group("name"));
 					String role = Chn2Eng(matcher.group("role"));
 					output.append("Seat " + seatNo + ": " + name + role
 							+ " folded before Flop\r\n");
@@ -337,7 +353,7 @@ public class ChineseToPsLog {
 			matcher = pWinner.matcher(psLog);
 			if (matcher.matches()){
 				String seatNo = matcher.group("seat");
-				String name = matcher.group("name");
+				String name = Chn2PinYin(matcher.group("name"));
 				String role = Chn2Eng(matcher.group("role"));
 				String cards = matcher.group("cards").replace("10", "T");
 				String money = getMoneyString(matcher);
@@ -348,7 +364,7 @@ public class ChineseToPsLog {
 				matcher = pWinnerBeforeFlop.matcher(psLog);
 				if (matcher.matches()){
 					String seatNo = matcher.group("seat");
-					String name = matcher.group("name");
+					String name = Chn2PinYin(matcher.group("name"));
 					String role = Chn2Eng(matcher.group("role"));
 					String money = getMoneyString(matcher);
 					output.append("Seat " + seatNo + ": " + name + role
@@ -433,6 +449,25 @@ public class ChineseToPsLog {
 			return " (button)";
 		else
 			return chn;
+	}
+	
+	private static String Chn2PinYin(String src){
+		StringBuilder pinyin = new StringBuilder();
+	    try {
+	        for (char element : src.toCharArray()) {
+	            if (Character.toString(element).matches("[\\u4E00-\\u9FA5]+")) {
+	                String[] srcArry = PinyinHelper.toHanyuPinyinStringArray(element, defaultFormat);
+	                pinyin.append(srcArry[0]);
+	            } else {
+	                pinyin.append(Character.toString(element));
+	            }
+	        }
+
+	    } catch (BadHanyuPinyinOutputFormatCombination e1) {
+	        // e1.printStackTrace();
+	    }
+
+	    return pinyin.toString();
 	}
 	
 	private static String removeTrailingZero(String sDecimal){
