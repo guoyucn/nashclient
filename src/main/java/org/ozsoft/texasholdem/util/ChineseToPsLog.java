@@ -52,29 +52,29 @@ public class ChineseToPsLog {
 	private static Pattern pHandBB = Pattern.compile("联众德州扑克牌局 (?<table>\\S+) 盘数编号：(?<hand>\\d+) 小盲/大盲/前注:"
 			+ psMoney + "/" + psMoney2 + "/" + psMoney3 + " (?<year>\\d+)年(?<month>\\d+)月(?<day>\\d+)日 (?<time>\\S+)");
 	private static Pattern pBtnSeat = Pattern.compile("第(?<seat>\\d+)号座位现在是庄家");
-	private static Pattern pSeatPlayer = Pattern.compile("第(?<seat>\\d+)号座位：玩家(?<name>\\S+)\\(" + psMoney + "筹码\\)");
-	private static Pattern pSmallBlind = Pattern.compile("玩家(?<name>\\S+)：下小盲" + psMoney + ".*");
-	private static Pattern pBigBlind = Pattern.compile("玩家(?<name>\\S+)：下大盲" + psMoney + ".*");
-	private static Pattern pHoleCards = Pattern.compile("发牌给 玩家(?<name>\\S+)【(?<hole>.+)】");
-	private static Pattern pBet = Pattern.compile("玩家(?<name>\\S+)：下注" + psMoney + "(?<allin> 全下)?");
-	//private static Pattern pRaise = Pattern.compile("玩家(?<name>\\S+)：加注至((?<yi>\\d+)亿)?(?<wan>\\d+)万(?<one>\\d*)");
-	private static Pattern pRaise = Pattern.compile("玩家(?<name>\\S+)：加注至" + psMoney + "(?<allin> 全下)?");
+	private static Pattern pSeatPlayer = Pattern.compile("第(?<seat>\\d+)号座位：玩家(?<name>.+)\\(" + psMoney + "筹码\\)");
+	private static Pattern pSmallBlind = Pattern.compile("玩家(?<name>.+)：下小盲" + psMoney + ".*");
+	private static Pattern pBigBlind = Pattern.compile("玩家(?<name>.+)：下大盲" + psMoney + ".*");
+	private static Pattern pHoleCards = Pattern.compile("发牌给 玩家(?<name>.+)【(?<hole>.+)】");
+	private static Pattern pBet = Pattern.compile("玩家(?<name>.+)：下注" + psMoney + "(?<allin> 全下)?");
+	//private static Pattern pRaise = Pattern.compile("玩家(?<name>.+)：加注至((?<yi>\\d+)亿)?(?<wan>\\d+)万(?<one>\\d*)");
+	private static Pattern pRaise = Pattern.compile("玩家(?<name>.+)：加注至" + psMoney + "(?<allin> 全下)?");
 	//private static Pattern pCall = Pattern.compile("玩家(\\S+)：跟注至(\\d+)万(\\d*)");
-	private static Pattern pCall = Pattern.compile("玩家(?<name>\\S+)：跟注至" + psMoney + "(?<allin> 全下)?");
-	private static Pattern pCheck = Pattern.compile("玩家(?<name>\\S+)：让牌");
-	private static Pattern pFold = Pattern.compile("玩家(?<name>\\S+)：弃牌");
+	private static Pattern pCall = Pattern.compile("玩家(?<name>.+)：跟注至" + psMoney + "(?<allin> 全下)?");
+	private static Pattern pCheck = Pattern.compile("玩家(?<name>.+)：让牌");
+	private static Pattern pFold = Pattern.compile("玩家(?<name>.+)：弃牌");
 	private static Pattern pFlop = Pattern.compile("\\*\\*\\*\\*\\*翻牌\\*\\*\\*\\*\\*【(?<flop>.+)】.*");
 	private static Pattern pTurn = Pattern.compile("\\*\\*\\*\\*\\*转牌\\*\\*\\*\\*\\*【.+】【(?<turn>\\S+)】.*");
 	private static Pattern pRiver = Pattern.compile("\\*\\*\\*\\*\\*河牌\\*\\*\\*\\*\\*【.+】【.+】【(?<river>\\S+)】.*");
-	private static Pattern pUncalledBet = Pattern.compile("无人跟注 退还" + psMoney + "筹码给玩家(?<name>\\S+)");
-	private static Pattern pWinFromPot = Pattern.compile("(?<name>\\S+)从主池赢得" + psMoney + ".*");
+	private static Pattern pUncalledBet = Pattern.compile("无人跟注 退还" + psMoney + "筹码给玩家(?<name>.+)");
+	private static Pattern pWinFromPot = Pattern.compile("(?<name>.+)从主池赢得" + psMoney + ".*");
 	private static Pattern pSummary = Pattern.compile("\\*\\*\\*\\*\\*摘要\\*\\*\\*\\*\\*");
 	private static Pattern pTotalPot = Pattern.compile("底池：" + psMoney + " 主池：" + psMoney2 + ".*");
 	private static Pattern pBoard = Pattern.compile("发出公共牌【(?<board>.+)】");
-	private static Pattern pLoser = Pattern.compile("第(?<seat>\\d+)号座位：玩家(?<name>\\S+) (\\((?<role>\\S+)\\))*.*【(?<cards>.+)】.*败北.*");
-	private static Pattern pLoserBeforeFlop = Pattern.compile("第(?<seat>\\d+)号座位：玩家(?<name>\\S+) (\\((?<role>\\S+)\\))*.*败北.*");
-	private static Pattern pWinner = Pattern.compile("第(?<seat>\\d+)号座位：玩家(?<name>\\S+) (\\((?<role>\\S+)\\))*.*【(?<cards>.+)】.*胜出 \\(" + psMoney + "\\).*");
-	private static Pattern pWinnerBeforeFlop = Pattern.compile("第(?<seat>\\d+)号座位：玩家(?<name>\\S+) (\\((?<role>\\S+)\\))*.*胜出 \\(" + psMoney + "\\).*");
+	private static Pattern pLoser = Pattern.compile("第(?<seat>\\d+)号座位：玩家(?<name>.+) (\\((?<role>\\S+)\\))*.*【(?<cards>.+)】.*败北.*");
+	private static Pattern pLoserBeforeFlop = Pattern.compile("第(?<seat>\\d+)号座位：玩家(?<name>.+) (\\((?<role>\\S+)\\))*.*败北.*");
+	private static Pattern pWinner = Pattern.compile("第(?<seat>\\d+)号座位：玩家(?<name>.+) (\\((?<role>\\S+)\\))*.*【(?<cards>.+)】.*胜出 \\(" + psMoney + "\\).*");
+	private static Pattern pWinnerBeforeFlop = Pattern.compile("第(?<seat>\\d+)号座位：玩家(?<name>.+) (\\((?<role>\\S+)\\))*.*胜出 \\(" + psMoney + "\\).*");
 	
 	private static HanyuPinyinOutputFormat defaultFormat = new HanyuPinyinOutputFormat();
 	
