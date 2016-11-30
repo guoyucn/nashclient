@@ -15,6 +15,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -493,24 +495,53 @@ public class ChineseToPsLog {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		File inputFile;
+		File inputFile = null;
+		File replaceFile = null;
 		boolean debug = false; 
 		List<String> psLogs = new ArrayList<String>();
+		HashMap<String, String> replaces = new HashMap<>(); 
 		
-		if (!(args == null || args.length < 1 || args.length > 2)) {
+		if (!(args == null || args.length < 1 || args.length > 3)) {
 			try {
 				if (args.length == 1){
 					inputFile = new File(args[0]);					
+				} else if (args.length == 2) {
+					if ("/d".equalsIgnoreCase(args[0])){
+						debug = true;
+						inputFile = new File(args[1]);
+					} else {
+						inputFile = new File(args[0]);
+						replaceFile = new File(args[1]);
+					}
 				} else {
 					if (!"/d".equalsIgnoreCase(args[0])){
 						throw new Exception("Wrong option - " + args[0]);
 					}
 					debug = true;
 					inputFile = new File(args[1]);
+					replaceFile = new File(args[2]);
 				}
 				
+				if (replaceFile != null){
+					try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(replaceFile), "utf-8"))) {
+						for(String line; (line = br.readLine()) != null; ) {
+							line = line.trim();
+							if (line.length() > 0){
+								String[] maps = line.split(" ");
+								replaces.put(maps[0], maps[1]);
+							}
+						}
+					}
+				}
+
 				try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(inputFile), "utf-8"))) {
 				    for(String line; (line = br.readLine()) != null; ) {
+				    	if (!replaces.isEmpty()){
+				    		for (Map.Entry<String, String> entry : replaces.entrySet()) {
+				    			line = line.replace(entry.getKey(), entry.getValue());
+				    		}
+				    	}
+				    	
 				    	psLogs.add(line);
 				    }
 				}
