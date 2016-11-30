@@ -1,0 +1,1 @@
+mvn org.apache.maven.plugins:maven-install-plugin:2.5.1:install-file -Dfile=c:\tmp\pinyin4j-2.5.0.jar -DgroupId=net.sourceforge -DartifactId=pinyin4j Dversion=2.5.0 -Dpackaging=jar -e -X
