@@ -78,12 +78,16 @@ public class ChineseToPsLog {
 	private static Pattern pLoserBeforeFlop = Pattern.compile("第(?<seat>\\d+)号座位：玩家(?<name>[^\\s\\(]+) (\\((?<role>\\S+)\\))*.*败北.*");
 	private static Pattern pWinner = Pattern.compile("第(?<seat>\\d+)号座位：玩家(?<name>[^\\s\\(]+) (\\((?<role>\\S+)\\))*.*【(?<cards>.+)】.*胜出 \\(" + psMoney + "\\).*");
 	private static Pattern pWinnerBeforeFlop = Pattern.compile("第(?<seat>\\d+)号座位：玩家(?<name>[^\\s\\(]+) (\\((?<role>\\S+)\\))*.*胜出 \\(" + psMoney + "\\).*");
-	
+	private static Pattern pHandEnd = Pattern.compile("======+");
 	private static HanyuPinyinOutputFormat defaultFormat = new HanyuPinyinOutputFormat();
 	
 	private static StringBuilder output = new StringBuilder();
+	private static HashMap<String, String> rakeMap = new HashMap<>();
+	
+	private static StringBuilder outputHand = new StringBuilder();
 	private static Matcher matcher;
 	private static String tableNo = "";
+	private static BigDecimal rake = null;
 	private static String handNo = "";
 	private static BigDecimal sb = null;
 	private static BigDecimal bb = null;
@@ -127,6 +131,8 @@ public class ChineseToPsLog {
 			try {
 				matcher = pHandBB.matcher(psLog);
 				if (matcher.matches()){
+					tableNo = matcher.group("table");
+					rake = getRake(); //Get rake based on tableNo
 					tableNo = Chn2PinYin(matcher.group("table"));
 					handNo = matcher.group("hand");
 					sb = new BigDecimal(getMoneyString(matcher));
@@ -136,8 +142,13 @@ public class ChineseToPsLog {
 					month = matcher.group("month");
 					day = matcher.group("day");
 					time = matcher.group("time");
-	
-					output.append("\r\n\r\n\r\n").append("PokerStars Hand #")
+					
+					if(outputHand.length() != 0){
+						output.append(outputHand);
+					}
+					outputHand = new StringBuilder();
+
+					outputHand.append("\r\n\r\n\r\n").append("PokerStars Hand #")
 					.append(handNo).append(":  Hold'em No Limit ($").append(sb).append("/$")
 					.append(bb).append(" USD) - ").append(year).append("/").append(month)
 					.append("/").append(day).append(" " + time + " ET\r\n");
@@ -168,7 +179,7 @@ public class ChineseToPsLog {
 				if (matcher.matches()){
 					btnSeat = Integer.parseInt(matcher.group("seat"));
 					//Displaying seat number starting from 1 instead of 0 now
-					output.append("Table '" + tableNo + "' 9-max Seat #").append(btnSeat+1).append(" is the button\r\n");
+					outputHand.append("Table '" + tableNo + "' 9-max Seat #").append(btnSeat+1).append(" is the button\r\n");
 					continue;
 				}
 				
@@ -181,7 +192,7 @@ public class ChineseToPsLog {
 					moneys[seatNo] = new BigDecimal(money);
 					oriMoneys[seatNo] = new BigDecimal(money);
 					 //Displaying seat number starting from 1 instead of 0 now
-					output.append("Seat ").append(seatNo+1).append(": " + name + " ($" + money + " in chips)\r\n"); 
+					outputHand.append("Seat ").append(seatNo+1).append(": " + name + " ($" + money + " in chips)\r\n"); 
 					continue;
 				}
 				
@@ -204,14 +215,12 @@ public class ChineseToPsLog {
 					}
 
 					String name = Chn2PinYin(matcher.group("name"));
-					bet = new BigDecimal(getMoneyString(matcher));
 					if (!bBB){
-						bBB = payBB(name, bet);
+						bBB = payBB(name, bb);
 					}
 					
 					if (!bAntePaid){
 						bAntePaid = payAnte();
-						bet = bet.add(ante);
 					}
 					
 					continue;
@@ -224,20 +233,18 @@ public class ChineseToPsLog {
 					}
 					if (!bBB){
 						bBB = payBB(null, null);
-						bet = bb;
 					}
 					if (!bAntePaid){
 						bAntePaid = payAnte();
-						bet = bet.add(ante);
 					}
 
 					if (!bHoleCards){
-						output.append("*** HOLE CARDS ***\r\n");
+						outputHand.append("*** HOLE CARDS ***\r\n");
 						bHoleCards = true;
 					}
 
 					String holeCards = matcher.group("hole").replace("10", "T");
-					output.append("Dealt to " + Chn2PinYin(matcher.group("name")) + " [" + holeCards + "]\r\n"); 
+					outputHand.append("Dealt to " + Chn2PinYin(matcher.group("name")) + " [" + holeCards + "]\r\n"); 
 					continue;
 				}
 				
@@ -248,11 +255,9 @@ public class ChineseToPsLog {
 					}
 					if (!bBB){
 						bBB = payBB(null, null);
-						bet = bb;
 					}
 					if (!bAntePaid){
 						bAntePaid = payAnte();
-						bet = bet.add(ante);
 					}
 
 					continue;
@@ -266,9 +271,9 @@ public class ChineseToPsLog {
 	
 					String allin = matcher.group("allin");
 					if (allin == null || allin.length() == 0){
-						output.append(name + ": bets $" + bet + "\r\n");
+						outputHand.append(name + ": bets $" + bet + "\r\n");
 					} else {
-						output.append(name + ": bets $" + bet + " and is all-in\r\n");
+						outputHand.append(name + ": bets $" + bet + " and is all-in\r\n");
 					}
 					continue;
 				}
@@ -283,10 +288,10 @@ public class ChineseToPsLog {
 					
 					String allin = matcher.group("allin");
 					if (allin == null || allin.length() == 0){
-						output.append(name + ": raises $" + increment + " to $"
+						outputHand.append(name + ": raises $" + increment + " to $"
 							+ bet + "\r\n");
 					} else {
-						output.append(name + ": raises $" + increment + " to $"
+						outputHand.append(name + ": raises $" + increment + " to $"
 							+ bet + " and is all-in\r\n");
 					}
 					continue;
@@ -300,9 +305,9 @@ public class ChineseToPsLog {
 	
 					String allin = matcher.group("allin");
 					if (allin == null || allin.length() == 0){
-						output.append(name + ": calls $" + bet + "\r\n");
+						outputHand.append(name + ": calls $" + bet + "\r\n");
 					} else {
-						output.append(name + ": calls $" + bet + " and is all-in\r\n");
+						outputHand.append(name + ": calls $" + bet + " and is all-in\r\n");
 					}
 					continue;
 				}
@@ -311,14 +316,14 @@ public class ChineseToPsLog {
 				if (matcher.matches()){
 					bActioned = true;
 					String name = Chn2PinYin(matcher.group("name"));
-					output.append(name + ": checks\r\n");
+					outputHand.append(name + ": checks\r\n");
 					continue;
 				}
 				
 				matcher = pFold.matcher(psLog);
 				if (matcher.matches()){
 					bActioned = true;
-					output.append(Chn2PinYin(matcher.group("name")) + ": folds\r\n");
+					outputHand.append(Chn2PinYin(matcher.group("name")) + ": folds\r\n");
 					continue;
 				}
 				
@@ -331,10 +336,11 @@ public class ChineseToPsLog {
 						String name = names[index];
 						boolean bAllin = (moneys[index].compareTo(BigDecimal.ZERO) == 0);
 						if (bAllin){
-							output.append(name + ": raises $0 to $"	+ oriMoneys[index] + " and is all-in\r\n");
+							outputHand.append(name + ": raises $0 to $"	+ oriMoneys[index] + " and is all-in\r\n");
 						} else {
-							String increment = bet.subtract(oriMoneys[index].subtract(moneys[index])).toString();
-							output.append(name + ": raises $" + increment + " to $"	+ bet + "\r\n");
+							BigDecimal increment = bet.subtract(oriMoneys[index].subtract(moneys[index]));
+							moneys[index] = moneys[index].subtract(increment);
+							outputHand.append(name + ": raises $" + increment + " to $"	+ bet + "\r\n");
 						}
 						
 						//Loop everybody
@@ -343,29 +349,29 @@ public class ChineseToPsLog {
 							name = names[index];
 							bAllin = (moneys[index].compareTo(BigDecimal.ZERO) == 0);
 							if (bAllin){
-								output.append(name + ": calls $" + oriMoneys[index] + " and is all-in\r\n");
+								outputHand.append(name + ": calls $" + oriMoneys[index] + " and is all-in\r\n");
 							} else {
-								output.append(name + ": calls $" + bet + "\r\n");
+								outputHand.append(name + ": calls $" + bet + "\r\n");
 							}
 						}
 					}
 					
 					flop = matcher.group("flop").replace("10", "T");
-					output.append("*** FLOP *** [" + flop + "]\r\n");
+					outputHand.append("*** FLOP *** [" + flop + "]\r\n");
 					continue;
 				}
 				
 				matcher = pTurn.matcher(psLog);
 				if (matcher.matches()){
 					turn = matcher.group("turn").replace("10", "T");
-					output.append("*** TURN *** [" + flop + "] [" + turn + "]\r\n");
+					outputHand.append("*** TURN *** [" + flop + "] [" + turn + "]\r\n");
 					continue;
 				}
 				
 				matcher = pRiver.matcher(psLog);
 				if (matcher.matches()){
 					river = matcher.group("river").replace("10", "T");
-					output.append("*** RIVER *** [" + flop + " " + turn + "] [" + river + "]\r\n");
+					outputHand.append("*** RIVER *** [" + flop + " " + turn + "] [" + river + "]\r\n");
 					continue;
 				}
 				
@@ -373,7 +379,7 @@ public class ChineseToPsLog {
 				if (matcher.matches()){
 					String money = getMoneyString(matcher);
 					String name = Chn2PinYin(matcher.group("name"));
-					output.append("Uncalled bet ($" + money + ") returned to " + name + "\r\n");
+					outputHand.append("Uncalled bet ($" + money + ") returned to " + name + "\r\n");
 					continue;
 				}
 				
@@ -384,13 +390,13 @@ public class ChineseToPsLog {
 					
 					//We have to use a placeholder for uncalledBet
 					//output.append("Uncalled bet (${uncalledBet}) returned to " + name + "\r\n");
-					output.append(name + " collected $" + money + " from pot\r\n");
+					outputHand.append(name + " collected $" + money + " from pot\r\n");
 					continue;
 				}
 				
 				matcher = pSummary.matcher(psLog);
 				if (matcher.matches()){
-					output.append("*** SUMMARY ***\r\n");
+					outputHand.append("*** SUMMARY ***\r\n");
 					continue;
 				}
 	
@@ -417,15 +423,17 @@ public class ChineseToPsLog {
 						}
 					}
 					*/
-					output.append("Total pot $" + money + " | Rake $"
-							+ sb + "\r\n");
+					BigDecimal totalRake = rake.multiply(new BigDecimal(getNumberOfPlayer()));
+					totalPot = totalPot.add(totalRake);
+					outputHand.append("Total pot $" + totalPot + " | Rake $"
+							+ totalRake + "\r\n");
 					continue;
 				}
 	
 				matcher = pBoard.matcher(psLog);
 				if (matcher.matches()){
 					String board = matcher.group("board").replace("10", "T");
-					output.append("Board [" + board + "]\r\n");
+					outputHand.append("Board [" + board + "]\r\n");
 					continue;
 				}
 	
@@ -435,7 +443,7 @@ public class ChineseToPsLog {
 					String name = Chn2PinYin(matcher.group("name"));
 					String role = Chn2Eng(matcher.group("role"));
 					String cards = matcher.group("cards").replace("10", "T");
-					output.append("Seat ").append(seatNo+1).append(": " + name + role
+					outputHand.append("Seat ").append(seatNo+1).append(": " + name + role
 							+ " showed [" + cards + "] and lost\r\n");
 					continue;
 				} else {
@@ -444,7 +452,7 @@ public class ChineseToPsLog {
 						int seatNo = Integer.parseInt(matcher.group("seat"));
 						String name = Chn2PinYin(matcher.group("name"));
 						String role = Chn2Eng(matcher.group("role"));
-						output.append("Seat ").append(seatNo+1).append(": " + name + role
+						outputHand.append("Seat ").append(seatNo+1).append(": " + name + role
 								+ " folded before Flop\r\n");
 						continue;
 					}
@@ -457,7 +465,7 @@ public class ChineseToPsLog {
 					String role = Chn2Eng(matcher.group("role"));
 					String cards = matcher.group("cards").replace("10", "T");
 					String money = getMoneyString(matcher);
-					output.append("Seat ").append(seatNo+1).append(": " + name + role
+					outputHand.append("Seat ").append(seatNo+1).append(": " + name + role
 							+ " showed [" + cards + "] and Won ($" + money + ")\r\n");
 					continue;
 				} else {
@@ -467,7 +475,7 @@ public class ChineseToPsLog {
 						String name = Chn2PinYin(matcher.group("name"));
 						String role = Chn2Eng(matcher.group("role"));
 						String money = getMoneyString(matcher);
-						output.append("Seat ").append(seatNo+1).append(": " + name + role
+						outputHand.append("Seat ").append(seatNo+1).append(": " + name + role
 								+ " collected ($" + money + ")\r\n");
 						continue;
 					}
@@ -480,13 +488,22 @@ public class ChineseToPsLog {
 					continue;
 				}
 				*/
+				
+				matcher = pHandEnd.matcher(psLog);
+				if (matcher.matches()){
+					if(outputHand.length() != 0){
+						output.append(outputHand);
+					}
+					outputHand = new StringBuilder();
+					continue;
+				}
 			} catch (Exception e) {
-				output.append("---!!! ERROR !!!--->>" + psLog + "\r\n")
+				outputHand.append("---!!! ERROR !!!--->>" + psLog + "\r\n")
 					.append(e.getMessage() + "\r\n");
 			}
 			
 			if (debug)
-				output.append("------Unhandled------>>" + psLog + "\r\n");
+				outputHand.append("------Unhandled------>>" + psLog + "\r\n");
 		}
 		return output.toString();
 	}
@@ -496,22 +513,26 @@ public class ChineseToPsLog {
 	 */
 	public static void main(String[] args) {
 		File inputFile = null;
+		File rakeFile = null;
 		File replaceFile = null;
 		boolean debug = false; 
 		List<String> psLogs = new ArrayList<String>();
 		HashMap<String, String> replaces = new HashMap<>(); 
 		
-		if (!(args == null || args.length < 1 || args.length > 3)) {
+		if (!(args == null || args.length < 2 || args.length > 4)) {
 			try {
-				if (args.length == 1){
-					inputFile = new File(args[0]);					
-				} else if (args.length == 2) {
+				if (args.length == 2){
+					inputFile = new File(args[0]);
+					rakeFile = new File(args[1]);
+				} else if (args.length == 3) {
 					if ("/d".equalsIgnoreCase(args[0])){
 						debug = true;
 						inputFile = new File(args[1]);
+						rakeFile = new File(args[2]);
 					} else {
 						inputFile = new File(args[0]);
-						replaceFile = new File(args[1]);
+						rakeFile = new File(args[1]);
+						replaceFile = new File(args[2]);
 					}
 				} else {
 					if (!"/d".equalsIgnoreCase(args[0])){
@@ -519,9 +540,22 @@ public class ChineseToPsLog {
 					}
 					debug = true;
 					inputFile = new File(args[1]);
-					replaceFile = new File(args[2]);
+					rakeFile = new File(args[2]);
+					replaceFile = new File(args[3]);
 				}
 				
+				if (rakeFile != null){
+					try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(rakeFile), "utf-8"))) {
+						for(String line; (line = br.readLine()) != null; ) {
+							line = line.trim();
+							if (line.length() > 0){
+								String[] maps = line.split(" ");
+								rakeMap.put(maps[0], maps[1]);
+							}
+						}
+					}
+				}
+
 				if (replaceFile != null){
 					try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(replaceFile), "utf-8"))) {
 						for(String line; (line = br.readLine()) != null; ) {
@@ -560,6 +594,19 @@ public class ChineseToPsLog {
 			}
 		}
 
+	}
+	
+	private static BigDecimal getRake(){
+    	if (!rakeMap.isEmpty()){
+    		for (Map.Entry<String, String> entry : rakeMap.entrySet()) {
+    			if(tableNo.contains(entry.getKey())){
+    				return new BigDecimal(entry.getValue());
+    			}
+    		}
+    	}
+    	
+    	//Default Rake
+    	return new BigDecimal("0.1");
 	}
 
 	private static void logError(Exception e) {
@@ -619,8 +666,9 @@ public class ChineseToPsLog {
 			money = sb;
 		}
 		
+		bet = money;
 		deductMoney(name, money);
-		output.append(name).append(": posts small blind $")
+		outputHand.append(name).append(": posts small blind $")
 		.append(money).append("\r\n"); 
 
 		return true;
@@ -633,24 +681,33 @@ public class ChineseToPsLog {
 			money = bb;
 		}
 		
+		bet = money;
 		deductMoney(name, money);
-		output.append(name).append(": posts big blind $").append(money).append("\r\n");
+		outputHand.append(name).append(": posts big blind $").append(money).append("\r\n");
 
 		return true;
 	}
 
 	private static boolean payAnte(){
+		bet = bet.add(ante);
 		for (int i = 0; i < names.length; i++){
-			if (names[i] != null){
-				if (moneys[i].compareTo(ante) > 0){
-					output.append(names[i] + ": posts the ante $").append(ante).append("\r\n");					
-					moneys[i] = moneys[i].subtract(ante);
-				} else {
-					output.append(names[i] + ": posts the ante $").append(moneys[i]).append("\r\n");					
-					moneys[i] = new BigDecimal("0");
-				}
+			if (names[i] != null && oriMoneys[i].compareTo(bet) < 0){
+				bet = oriMoneys[i];
 			}
 		}
+		
+		BigDecimal actualAnte = null;
+		for (int i = 0; i < names.length; i++){
+			if (names[i] != null){
+				actualAnte = bet.subtract(oriMoneys[i].subtract(moneys[i]));
+				if (actualAnte.compareTo(ante) > 0){
+					actualAnte = ante;
+				}
+				outputHand.append(names[i] + ": posts the ante $").append(actualAnte).append("\r\n");					
+				moneys[i] = moneys[i].subtract(actualAnte);
+			}
+		}
+		
 		return true;
 	}
 	

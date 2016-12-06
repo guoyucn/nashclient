@@ -59,11 +59,11 @@
 5. 如何将中文牌局记录文件转化为PokerStar文件格式。
 	运行如下命令行将中文牌局记录文件转化为PokerStar文件格式：
 	1）正常模式：
-	java -cp poker-2.01.jar org.ozsoft.texasholdem.util.ChineseToPsLog InputFile
+	java -cp poker-2.01.jar org.ozsoft.texasholdem.util.ChineseToPsLog InputFile rake.txt
 	2)替换模式：
-	java -cp poker-2.01.jar org.ozsoft.texasholdem.util.ChineseToPsLog InputFile ReplaceFile
+	java -cp poker-2.01.jar org.ozsoft.texasholdem.util.ChineseToPsLog InputFile rake.txt ReplaceFile
 	3）正常Debug模式：
-	java -cp poker-2.01.jar org.ozsoft.texasholdem.util.ChineseToPsLog /d InputFile
+	java -cp poker-2.01.jar org.ozsoft.texasholdem.util.ChineseToPsLog /d InputFile rake.txt
 	4）替换Debug模式：
-	java -cp poker-2.01.jar org.ozsoft.texasholdem.util.ChineseToPsLog /d InputFile ReplaceFile
+	java -cp poker-2.01.jar org.ozsoft.texasholdem.util.ChineseToPsLog /d InputFile rake.txt ReplaceFile
 	
