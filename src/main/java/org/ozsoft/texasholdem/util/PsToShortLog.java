@@ -45,7 +45,7 @@ public class PsToShortLog {
 		String player_1 = "";
 		String player_2 = "";
 		
-		for(String psLog : psLogs){
+		for(String psLog : psLogs){	
 			if (psLog == null)
 				continue;
 			psLog = psLog.trim();

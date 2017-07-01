@@ -58,12 +58,6 @@ import org.tempuri.SolveResponse;
  */
 public class BasicBot extends Bot {
     
-    /** Tightness (0 = loose, 100 = tight). */
-    private final int tightness;
-    
-    /** Betting aggression (0 = safe, 100 = aggressive). */
-    private final int aggression;
-    
     /** Table type. */
     private TableType tableType;
     
@@ -80,26 +74,35 @@ public class BasicBot extends Bot {
      *            The bot's aggressiveness in betting (0 = careful, 100 =
      *            aggressive).
      */
-    public BasicBot(int tightness, int aggression) {
+//    public BasicBot(int tightness, int aggression) {
+//    	URL wsdlLocation;
+//		try {
+//			wsdlLocation = new URL("http://123.56.189.157/Service1.svc?wsdl");
+//			Service1 s = new Service1(wsdlLocation);
+//	    	pokerService = s.getPort(IPokerService.class);
+//		} catch (MalformedURLException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//        if (tightness < 0 || tightness > 100) {
+//            throw new IllegalArgumentException("Invalid tightness setting");
+//        }
+//        if (aggression < 0 || aggression > 100) {
+//            throw new IllegalArgumentException("Invalid aggression setting");
+//        }
+//    }
+
+    public BasicBot(String endPoint){
     	URL wsdlLocation;
 		try {
-			wsdlLocation = new URL("http://123.56.189.157/Service1.svc?wsdl");
+			wsdlLocation = new URL(endPoint);
 			Service1 s = new Service1(wsdlLocation);
 	    	pokerService = s.getPort(IPokerService.class);
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-        if (tightness < 0 || tightness > 100) {
-            throw new IllegalArgumentException("Invalid tightness setting");
-        }
-        if (aggression < 0 || aggression > 100) {
-            throw new IllegalArgumentException("Invalid aggression setting");
-        }
-        this.tightness = tightness;
-        this.aggression = aggression;
     }
-
     /** {@inheritDoc} */
     @Override
     public void joinedTable(TableType type, int bigBlind, List<Player> players) {
@@ -155,10 +158,10 @@ public class BasicBot extends Bot {
 //	    	IPokerService pokerService = s.getPort(IPokerService.class);
 	    	String response = pokerService.solve(command);
 	    	int index = response.indexOf("action=");
-	    	String action = response.substring(index+7);
+	    	String action = response.substring(index+7).split("\r")[0];
 	    	action = action.split("\\r?\\n")[0];
+	    	System.out.println("input: " + command);
 	    	System.out.println("output: " + response);
-//	    	System.out.println("input: " + command);
 	    	System.out.println("action: " + action);
 	    	if ("c".equals(action)){
 	    		return Action.CALL;

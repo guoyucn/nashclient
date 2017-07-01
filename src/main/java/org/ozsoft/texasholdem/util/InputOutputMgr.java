@@ -200,7 +200,7 @@ public enum InputOutputMgr {
 			String fileName = inputFiles.get(inputFileIndex).getName();
 			res = fileName.substring(fileName.lastIndexOf(".")-12, fileName.lastIndexOf("."));
 		} catch (Exception e) {
-			System.out.println("Exception in getInputFileTimeStamp() : " + e.getMessage());
+			//System.out.println("Exception in getInputFileTimeStamp() : " + e.getMessage());
 			res = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMddHHmmss"));
 		}
 		

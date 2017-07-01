@@ -116,6 +116,9 @@ public class Table {
     private int raises;
     
     private StringBuilder commandBuilder = new StringBuilder();
+    
+    private StringBuilder commandBuilder2 = new StringBuilder();
+    
     private StringBuilder outputBuilder = new StringBuilder();
     
     private long handNumber = 0;
@@ -216,7 +219,7 @@ public class Table {
      */
     private void playHand() {
     	if (InputOutputMgr.INSTANCE.getInputType() == InputOutputMgr.InputType.File){
-    		handNumber = Long.parseLong(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMddHHmmss")));
+    		handNumber = System.currentTimeMillis();//Long.parseLong(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMddHHmmss")));
     	} else {
     		handNumber++;
     	}
@@ -228,10 +231,19 @@ public class Table {
         commandBuilder.append(" ").append(players.get(1).getCash());
         commandBuilder.append(" ").append(players.get(0).getCash());
         
+        commandBuilder2 = new StringBuilder();
+        commandBuilder2.append(handNumber).append(" ").append(bigBlind);
+        commandBuilder2.append(" ").append(players.get(0).getCash());
+        commandBuilder2.append(" ").append(players.get(1).getCash());
+        
+        
         if (dealerPosition == 1){
         	commandBuilder.append(" ").append("S");
+        	commandBuilder2.append(" ").append("B");
+        	
 		}else{
 			commandBuilder.append(" ").append("B");
+			commandBuilder2.append(" ").append("S");
 		}
         //-->
         
@@ -262,6 +274,8 @@ public class Table {
         
         //<--
         commandBuilder.append(" ").append(players.get(1).getCards()[0]).append(players.get(1).getCards()[1]);
+        commandBuilder2.append(" ").append(players.get(0).getCards()[0]).append(players.get(0).getCards()[1]);
+        
         //-->
         
         doBettingRound(true);
@@ -271,6 +285,7 @@ public class Table {
             bet = 0;
             dealCommunityCards("Flop", 3);
             commandBuilder.append(" ").append("F.").append(board.get(0)).append(board.get(1)).append(board.get(2));
+            commandBuilder2.append(" ").append("F.").append(board.get(0)).append(board.get(1)).append(board.get(2));
             
             doBettingRound(false);
 
@@ -279,6 +294,7 @@ public class Table {
                 bet = 0;
                 dealCommunityCards("Turn", 1);
                 commandBuilder.append(" ").append("T.").append(board.get(3));
+                commandBuilder2.append(" ").append("T.").append(board.get(3));
                 //minBet = 2 * bigBlind;
                 doBettingRound(false);
 
@@ -287,6 +303,7 @@ public class Table {
                     bet = 0;
                     dealCommunityCards("River", 1);
                     commandBuilder.append(" ").append("R.").append(board.get(4));
+                    commandBuilder2.append(" ").append("R.").append(board.get(4));
                     doBettingRound(false);
 
                     // Showdown.
@@ -487,7 +504,13 @@ public class Table {
             } else {
                 // Otherwise allow client to act.
                 Set<Action> allowedActions = getAllowedActions(actor);
-                action = actor.getClient().act(minBet, bet, allowedActions, commandBuilder.toString());
+                String command = null;
+                if (actor == players.get(0)){
+                	command = commandBuilder2.toString();
+                }else{
+                	command = commandBuilder.toString();
+                }
+                action = actor.getClient().act(minBet, bet, allowedActions, command);
                 // Verify chosen action to guard against broken clients (accidental or on purpose).
                 if (!allowedActions.contains(action)) {
                     if (action instanceof BetAction && !allowedActions.contains(Action.BET)) {
@@ -501,9 +524,11 @@ public class Table {
                 if (actor == players.get(0)){
                 	//isHuman = true;
                 	commandBuilder.append(" ").append("V.");
+                	commandBuilder2.append(" ").append("H.");
                 }else{
                 	//isHuman = false;
                 	commandBuilder.append(" ").append("H.");
+                	commandBuilder2.append(" ").append("V.");
                 }
                 	
             	//output
@@ -511,11 +536,13 @@ public class Table {
                 
                 if (action == Action.CHECK) {
                 	commandBuilder.append("k");
+                	commandBuilder2.append("k");
                     // Do nothing.
                 	//output
                 	outputBuilder.append("checks\r\n");
                 } else if (action == Action.CALL) {
                 	commandBuilder.append("c");
+                	commandBuilder2.append("c");
                 	boolean partialCall = false;
                     int betIncrement = bet - actor.getBet();
                     if (betIncrement > actor.getCash()) {
@@ -553,6 +580,7 @@ public class Table {
                     playersToAct = activePlayers.size() - 1;
                     
                     commandBuilder.append("r").append(amount);
+                    commandBuilder2.append("r").append(amount);
                 	//output
                 } else if (action instanceof RaiseAction) {
                     int amount =  action.getAmount();
@@ -586,6 +614,7 @@ public class Table {
                         playersToAct = activePlayers.size() - 1;
                     }
                     commandBuilder.append("r").append(amount);
+                    commandBuilder2.append("r").append(amount);
                 	//output
                     outputBuilder.append("raises ").append(amount).append(" to ").append(actor.getBet()).append("\r\n");
                     
@@ -626,6 +655,7 @@ public class Table {
                     }
 
                     commandBuilder.append("f");
+                    commandBuilder2.append("f");
                 } else if (action == Action.ALL_IN){
                 	int amount = actor.getCash();
                 	int raise = actor.getBet() + amount - bet;
@@ -645,6 +675,7 @@ public class Table {
                     
                     playersToAct = activePlayers.size() - 1;
                     commandBuilder.append("r").append(raise);
+                    commandBuilder2.append("r").append(raise);
                 	//outputBuilder.append("raises ").append(amount).append("\r\n");
                 	outputBuilder.append("raises ").append(raise).append(" to ").append(actor.getBet()).append("\r\n");
                 	
