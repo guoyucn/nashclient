@@ -20,10 +20,13 @@ package org.ozsoft.texasholdem.gui;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.swing.JFrame;
@@ -85,11 +88,18 @@ public class Main extends JFrame implements Client {
     /** The current actor's name. */
     private String actorName; 
 
+    
+    private Properties prop;
     /**
      * Constructor.
+     * @throws IOException 
      */
-    public Main() {
+    public Main() throws IOException {
         super("Texas Hold'em poker");
+        InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("application.properties");
+        //InputStream stream = Main.class.getResourceAsStream("application.properties");
+    	prop = new Properties();
+    	prop.load(stream);
         
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setBackground(UIConstants.TABLE_COLOR);
@@ -106,7 +116,8 @@ public class Main extends JFrame implements Client {
         players = new LinkedHashMap<String, Player>();
         humanPlayer = new Player("Human", STARTING_CASH, this);
         players.put("Human", humanPlayer);
-        players.put("Joe",    new Player("Joe",   STARTING_CASH, new BasicBot(0, 75)));
+//        players.put(prop.getProperty("hero.name", "Hero"),    new Player(prop.getProperty("hero.name", "Hero"),   STARTING_CASH, new BasicBot(prop.getProperty("ws.url.hero"))));        
+        players.put(prop.getProperty("villain.name", "Villain"),    new Player(prop.getProperty("villain.name", "Villain"),   STARTING_CASH, new BasicBot(prop.getProperty("ws.url.villain"))));
 //        players.put("Mike",   new Player("Mike",  0, new BasicBot(25, 50)));
 //        players.put("Eddie",  new Player("Eddie", 0, new BasicBot(50, 25)));
 
@@ -161,8 +172,9 @@ public class Main extends JFrame implements Client {
      * 
      * @param args
      *            The command line arguments.
+     * @throws IOException 
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
     	if (!(args == null || args.length < 1)) {
     		try {
     			InputOutputMgr.INSTANCE.setInputType(InputOutputMgr.InputType.valueOf(args[0]));
