@@ -5,7 +5,7 @@
 
 	<groupId>com.nash</groupId>
 	<artifactId>poker</artifactId>
-	<version>2.05</version>
+	<version>3.0</version>
 	<packaging>jar</packaging>
 
 	<name>poker-game</name>

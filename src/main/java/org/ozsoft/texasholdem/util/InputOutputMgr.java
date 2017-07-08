@@ -45,6 +45,7 @@ public enum InputOutputMgr {
 	private int bigBlind;
 	private int money1;
 	private int money2;
+	private int ante;
 	private Deck deck;
 	
 	private InputOutputMgr()
@@ -117,6 +118,10 @@ public enum InputOutputMgr {
 
 	public Deck getDeck() {
 		return deck;
+	}
+	
+	public int getAnte(){
+		return ante;
 	}
 
 	private static File createFolder(String folderName) {
@@ -212,9 +217,10 @@ public enum InputOutputMgr {
 		dealerPosition = Integer.parseInt(data[0].trim());
 		smallBlind = Integer.parseInt(data[1].trim());
 		bigBlind = Integer.parseInt(data[2].trim());
-		money1 = Integer.parseInt(data[3].trim());
-		money2 = Integer.parseInt(data[4].trim());
-		String[] cards = Arrays.copyOfRange(data, 5, 57);
+		ante = Integer.parseInt(data[3].trim());
+		money1 = Integer.parseInt(data[4].trim());
+		money2 = Integer.parseInt(data[5].trim());
+		String[] cards = Arrays.copyOfRange(data, 6, 58);
 		deck = new Deck(Arrays.asList(cards));
 	}
 	
@@ -310,10 +316,10 @@ public enum InputOutputMgr {
 		for (int i = 0; i < numberOfFiles; i++) {
 			String fileName = String.format("%s/Input_%d_%s.csv", inputFolderStr, i, time);
 			try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName), "utf-8"))) {
-				writer.write("DealerPosition, SmallBlind, BigBlind, Money1, Money2, Cards\n");
+				writer.write("DealerPosition, SmallBlind, BigBlind, Money1, Money2, Ante, Cards\n");
 				for (int j = 0; j < numberOfRows; j++) {
 					deck.shuffle();
-					writer.write(String.format("0, 5, 10, 500, 500, %s\n", deck.toString().replaceAll(" ", ",")));
+					writer.write(String.format("0, 5, 10, 50, 500, 500 %s\n", deck.toString().replaceAll(" ", ",")));
 				}
 			}
 		}

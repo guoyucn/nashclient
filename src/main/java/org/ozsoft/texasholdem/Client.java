@@ -87,7 +87,7 @@ public interface Client {
      * @param pot
      *            The current pot.
      */
-    void boardUpdated(List<Card> cards, int bet, int pot);
+    void boardUpdated(List<Card> cards, int bet, int pot, int ante);
     
     /**
      * Handles the event of a player acting.

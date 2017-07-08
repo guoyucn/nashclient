@@ -68,7 +68,7 @@ public class DummyBot extends Bot {
 
     /** {@inheritDoc} */
     @Override
-    public void boardUpdated(List<Card> cards, int bet, int pot) {
+    public void boardUpdated(List<Card> cards, int bet, int pot, int ante) {
         // Not implemented.
     }
 

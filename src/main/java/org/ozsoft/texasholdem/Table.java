@@ -90,6 +90,8 @@ public class Table {
     
     /** The current dealer position. */
     private int dealerPosition;
+    
+    private int ante;
 
     /** The current dealer. */
     private Player dealer;
@@ -124,6 +126,8 @@ public class Table {
     private long handNumber = 0;
 
     private boolean allin = false;
+
+	private int anteInTimesOfBB;
     
     /**
      * Constructor.
@@ -169,11 +173,13 @@ public class Table {
         		
         		dealerPosition = InputOutputMgr.INSTANCE.getDealerPosition();
         		bigBlind = InputOutputMgr.INSTANCE.getBigBlind();
+        		ante = InputOutputMgr.INSTANCE.getAnte();
         		
         		players.get(dealerPosition).setCash(InputOutputMgr.INSTANCE.getMoney1());
         		players.get((dealerPosition+1)%players.size()).setCash(InputOutputMgr.INSTANCE.getMoney2());
         	}else{
         		bigBlind = (int) (20 + (handNumber/3)*10);
+        		ante = bigBlind * anteInTimesOfBB;
         	}
         		
             int noOfActivePlayers = 0;
@@ -228,11 +234,13 @@ public class Table {
         //<--
         commandBuilder = new StringBuilder();
         commandBuilder.append(handNumber).append(" ").append(bigBlind);
+        commandBuilder.append(" ").append(ante);
         commandBuilder.append(" ").append(players.get(1).getCash());
         commandBuilder.append(" ").append(players.get(0).getCash());
         
         commandBuilder2 = new StringBuilder();
         commandBuilder2.append(handNumber).append(" ").append(bigBlind);
+        commandBuilder2.append(" ").append(ante);
         commandBuilder2.append(" ").append(players.get(0).getCash());
         commandBuilder2.append(" ").append(players.get(1).getCash());
         
@@ -257,12 +265,15 @@ public class Table {
         	.append(df.format(new Date())).append("\r\n");
         outputBuilder.append("Table '").append(inputFileTimeStamp).append("' 2-max Seat #").append(dealerPosition+1).append(" is the button\r\n");
         outputBuilder.append("Seat 1: ").append(activePlayers.get(0).getName()).append(" (").append(activePlayers.get(0).getCash()).append(" in chips)\r\n");
-        outputBuilder.append("Seat 2: ").append(activePlayers.get(1).getName()).append(" (").append(activePlayers.get(1).getCash()).append(" in chips)\r\n");
-                
+        outputBuilder.append("Seat 2: ").append(activePlayers.get(1).getName()).append(" (").append(activePlayers.get(1).getCash()).append(" in chips)\r\n");  
         // Small blind.
         if (activePlayers.size() > 2) {
             rotateActor();
         }
+        postAnte();
+        rotateActor();
+        postAnte();
+        rotateActor();
         postSmallBlind();
         
         // Big blind.
@@ -316,7 +327,9 @@ public class Table {
         }
     }
     
-    /**
+
+
+	/**
      * Resets the game for a new hand.
      */
     private void resetHand() {
@@ -404,6 +417,14 @@ public class Table {
         	.append(bigBlind).append("\r\n");
     }
     
+    private void postAnte() {
+    	actor.postAnte(ante);
+        contributePot(ante);
+        notifyBoardUpdated();
+        notifyPlayerActed();
+        outputBuilder.append(actor.getName()).append(": posts the ante ").append(ante).append("\r\n");
+
+	}
     /**
      * Deals the Hole Cards.
      */
@@ -1037,7 +1058,7 @@ public class Table {
     private void notifyBoardUpdated() {
         int pot = getTotalPot();
         for (Player player : players) {
-            player.getClient().boardUpdated(board, bet, pot);
+            player.getClient().boardUpdated(board, bet, pot, ante);
         }
     }
     
@@ -1184,6 +1205,10 @@ public class Table {
 
 	public List<Pot> getPots() {
 		return pots;
+	}
+
+	public void setAnteInTimesOfBB(int anteInTimesOfBB) {
+		this.anteInTimesOfBB = anteInTimesOfBB;
 	}
     
 }

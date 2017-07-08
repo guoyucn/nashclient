@@ -48,6 +48,9 @@ public class BoardPanel extends JPanel {
     /** Label with the bet. */
     private final JLabel betLabel;
 
+    /** Label with the ante. */
+    private final JLabel anteLabel;
+    
     /** Label with the pot. */
     private final JLabel potLabel;
 
@@ -74,6 +77,19 @@ public class BoardPanel extends JPanel {
         JLabel label = new JLabel("Bet");
         label.setForeground(Color.GREEN);
         gc.gridx = 1;
+        gc.gridy = 1;
+        gc.gridwidth = 1;
+        gc.gridheight = 1;
+        gc.anchor = GridBagConstraints.CENTER;
+        gc.fill = GridBagConstraints.NONE;
+        gc.weightx = 1.0;
+        gc.weighty = 0.0;
+        gc.insets = new Insets(0, 5, 0, 5);
+        add(label, gc);
+ 
+        label = new JLabel("Ante");
+        label.setForeground(Color.GREEN);
+        gc.gridx = 2;
         gc.gridy = 0;
         gc.gridwidth = 1;
         gc.gridheight = 1;
@@ -87,7 +103,7 @@ public class BoardPanel extends JPanel {
         label = new JLabel("Pot");
         label.setForeground(Color.GREEN);
         gc.gridx = 3;
-        gc.gridy = 0;
+        gc.gridy = 1;
         gc.gridwidth = 1;
         gc.gridheight = 1;
         gc.anchor = GridBagConstraints.CENTER;
@@ -102,7 +118,7 @@ public class BoardPanel extends JPanel {
         betLabel.setForeground(Color.GREEN);
         betLabel.setHorizontalAlignment(JLabel.CENTER);
         gc.gridx = 1;
-        gc.gridy = 1;
+        gc.gridy = 2;
         gc.gridwidth = 1;
         gc.gridheight = 1;
         gc.anchor = GridBagConstraints.CENTER;
@@ -112,12 +128,27 @@ public class BoardPanel extends JPanel {
         gc.insets = new Insets(5, 5, 5, 5);
         add(betLabel, gc);
 
+        anteLabel = new JLabel(" ");
+        anteLabel.setBorder(UIConstants.LABEL_BORDER);
+        anteLabel.setForeground(Color.GREEN);
+        anteLabel.setHorizontalAlignment(JLabel.CENTER);
+        gc.gridx = 2;
+        gc.gridy = 1;
+        gc.gridwidth = 1;
+        gc.gridheight = 1;
+        gc.anchor = GridBagConstraints.CENTER;
+        gc.fill = GridBagConstraints.HORIZONTAL;
+        gc.weightx = 1.0;
+        gc.weighty = 0.0;
+        gc.insets = new Insets(5, 5, 5, 5);
+        add(anteLabel, gc);
+        
         potLabel = new JLabel(" ");
         potLabel.setBorder(UIConstants.LABEL_BORDER);
         potLabel.setForeground(Color.GREEN);
         potLabel.setHorizontalAlignment(JLabel.CENTER);
         gc.gridx = 3;
-        gc.gridy = 1;
+        gc.gridy = 2;
         gc.gridwidth = 1;
         gc.gridheight = 1;
         gc.anchor = GridBagConstraints.CENTER;
@@ -132,7 +163,7 @@ public class BoardPanel extends JPanel {
         for (int i = 0; i < 5; i++) {
             cardLabels[i] = new JLabel(ResourceManager.getIcon("/images/card_placeholder.png"));
             gc.gridx = i;
-            gc.gridy = 2;
+            gc.gridy = 3;
             gc.gridwidth = 1;
             gc.gridheight = 1;
             gc.anchor = GridBagConstraints.CENTER;
@@ -148,7 +179,7 @@ public class BoardPanel extends JPanel {
         messageLabel.setForeground(Color.YELLOW);
         messageLabel.setHorizontalAlignment(JLabel.CENTER);
         gc.gridx = 0;
-        gc.gridy = 3;
+        gc.gridy = 4;
         gc.gridwidth = 5;
         gc.gridheight = 1;
         gc.anchor = GridBagConstraints.CENTER;
@@ -160,7 +191,7 @@ public class BoardPanel extends JPanel {
         
         // Control panel.
         gc.gridx = 0;
-        gc.gridy = 4;
+        gc.gridy = 5;
         gc.gridwidth = 5;
         gc.gridheight = 4;
         gc.insets = new Insets(0, 0, 0, 0);
@@ -172,7 +203,7 @@ public class BoardPanel extends JPanel {
         
         setPreferredSize(new Dimension(400, 320));
         
-        update(null, 0, 0);
+        update(null, 0, 0, 0);
     }
     
     /**
@@ -183,7 +214,7 @@ public class BoardPanel extends JPanel {
      * @param pot
      *            The pot.
      */
-    public void update(List<Card> cards, int bet, int pot) {
+    public void update(List<Card> cards, int bet, int pot, int ante) {
         if (bet == 0) {
             betLabel.setText(" ");
         } else {
@@ -194,6 +225,12 @@ public class BoardPanel extends JPanel {
         } else {
             potLabel.setText("$ " + pot);
         }
+        if (ante == 0) {
+            anteLabel.setText(" ");
+        } else {
+            anteLabel.setText("$ " + ante);
+        }
+        
         int noOfCards = (cards == null) ? 0 : cards.size();
         for (int i = 0; i < NO_OF_CARDS; i++) {
             if (i < noOfCards) {

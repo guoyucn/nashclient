@@ -209,6 +209,10 @@ public class Player {
         cash -= blind;
         bet += blind;
     }
+    
+    public void postAnte(int ante){
+    	cash -= ante;
+    }
 
     /**
      * Posts the big blinds.

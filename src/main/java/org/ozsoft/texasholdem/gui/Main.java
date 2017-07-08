@@ -20,6 +20,8 @@ package org.ozsoft.texasholdem.gui;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -96,7 +98,13 @@ public class Main extends JFrame implements Client {
      */
     public Main() throws IOException {
         super("Texas Hold'em poker");
-        InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("application.properties");
+        File config = new File ("config/application.properties");
+        InputStream stream = null;
+        if (config.exists()){
+        	stream = new FileInputStream(config);
+        }else{
+        	stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("application.properties");
+        }
         //InputStream stream = Main.class.getResourceAsStream("application.properties");
     	prop = new Properties();
     	prop.load(stream);
@@ -108,6 +116,8 @@ public class Main extends JFrame implements Client {
         gc = new GridBagConstraints();
 
         table = new Table(TABLE_TYPE, BIG_BLIND);
+        String anteInTimesOfBB = prop.getProperty("ante.in.times.of.bb", "10");
+        table.setAnteInTimesOfBB(Integer.parseInt(anteInTimesOfBB));
         controlPanel = new ControlPanel(TABLE_TYPE, table);
         
         boardPanel = new BoardPanel(controlPanel);        
@@ -219,8 +229,8 @@ public class Main extends JFrame implements Client {
     }
 
     @Override
-    public void boardUpdated(List<Card> cards, int bet, int pot) {
-        boardPanel.update(cards, bet, pot);
+    public void boardUpdated(List<Card> cards, int bet, int pot, int ante) {
+        boardPanel.update(cards, bet, pot, ante);
     }
 
     @Override

@@ -129,7 +129,7 @@ public class BasicBot extends Bot {
 
     /** {@inheritDoc} */
     @Override
-    public void boardUpdated(List<Card> cards, int bet, int pot) {
+    public void boardUpdated(List<Card> cards, int bet, int pot, int ante) {
         // Not implemented.
     }
 
@@ -153,9 +153,6 @@ public class BasicBot extends Bot {
     public Action act(int minBet, int currentBet, Set<Action> allowedActions, String command) {
     	
     	try {
-//			URL wsdlLocation = new URL("http://172.16.46.133/PokerWcfService/Service1.svc?wsdl");
-//			Service1 s = new Service1(wsdlLocation);
-//	    	IPokerService pokerService = s.getPort(IPokerService.class);
 	    	String response = pokerService.solve(command);
 	    	int index = response.indexOf("action=");
 	    	String action = response.substring(index+7).split("\r")[0];
@@ -163,6 +160,7 @@ public class BasicBot extends Bot {
 	    	System.out.println("input: " + command);
 	    	System.out.println("output: " + response);
 	    	System.out.println("action: " + action);
+//    		String action = "c";
 	    	if ("c".equals(action)){
 	    		return Action.CALL;
 	    	}else if ("k".equals(action)){
